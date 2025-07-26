@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .touch-none {
+    touch-action: none;
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+html, body {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+@media screen and (max-width: 360px) {
+  .xxs\:text-\[4px\] {
+    font-size: 4px;
+  }
+  .xxs\:text-\[5px\] {
+    font-size: 5px;
+  }
+}
+
+@media screen and (min-width: 361px) and (max-width: 639px) {
+  .xs\:text-\[5px\] {
+    font-size: 5px;
+  }
+  .xs\:text-\[6px\] {
+    font-size: 6px;
+  }
+}
