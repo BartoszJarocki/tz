@@ -188,7 +188,7 @@ export default function HorizontalWorldTimezones() {
               className="flex-1"
               style={{
                 background: bgColor,
-                flexBasis: `${100 / 24}%`,
+                flexBasis: `${100 / timezones.length}%`,
               }}
             />
           );
@@ -354,7 +354,7 @@ export default function HorizontalWorldTimezones() {
           <div
             key={`utc-${tz.name}`}
             className="flex-1 text-center"
-            style={{ flexBasis: `${100 / 24}%` }}
+            style={{ flexBasis: `${100 / timezones.length}%` }}
           >
             <p className={`${getTextColor(tz.name)} text-[8px] opacity-75`}>
               {tz.utcOffset}

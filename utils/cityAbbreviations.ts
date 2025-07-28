@@ -26,6 +26,7 @@ export const TIMEZONE_CITY_ABBREVIATIONS: Record<number, string[]> = {
   [9]: ["NRT", "ICN", "FNJ", "KIX", "HND"],
   [10]: ["SYD", "MEL", "BNE", "CBR", "POM"],
   [11]: ["NOU", "HIR", "VLI"],
+  [12]: ["AKL", "SUV", "WLG", "CHC", "FUN"],
 }
 
 export function getCityAbbreviationsForTimezone(offset: number): string[] {

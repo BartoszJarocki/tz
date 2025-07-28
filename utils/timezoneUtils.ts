@@ -50,6 +50,7 @@ export function getHourlyTimezones(): TimezoneInfo[] {
     { offset: 9, cityAbbr: 'TOK', cityFull: 'Tokyo', utcOffset: '+9', tzAbbr: 'JST', name: 'Asia/Tokyo', gradientTz: 'Etc/GMT-9' },
     { offset: 10, cityAbbr: 'SYD', cityFull: 'Sydney', utcOffset: '+10', tzAbbr: 'AEST', name: 'Australia/Sydney', gradientTz: 'Etc/GMT-10' },
     { offset: 11, cityAbbr: 'NOU', cityFull: 'Noumea', utcOffset: '+11', tzAbbr: 'NCT', name: 'Pacific/Noumea', gradientTz: 'Etc/GMT-11' },
+    { offset: 12, cityAbbr: 'AKL', cityFull: 'Auckland', utcOffset: '+12', tzAbbr: 'NZST', name: 'Pacific/Auckland', gradientTz: 'Etc/GMT-12' },
   ];
 
   return hourlyTimezones;
