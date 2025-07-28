@@ -146,21 +146,19 @@ export default function HorizontalWorldTimezones() {
 
   const getTimezoneColors = () => {
     return timezones.map((tz) => {
-      const localTime = new Date(
-        currentTime.getTime() +
-          getTimezoneOffset(tz.name) +
-          timeOffset * 3600000
-      );
-      const hours = localTime.getHours();
+      const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
+      const hourString = formatInTimeZone(adjustedTime, tz.gradientTz, 'HH');
+      const hours = parseInt(hourString, 10);
       return { tz: tz.name, color: getGradientColor(hours) };
     });
   };
 
   const getTextColor = (timezone: string) => {
-    const localTime = new Date(
-      currentTime.getTime() + getTimezoneOffset(timezone) + timeOffset * 3600000
-    );
-    const hours = localTime.getHours();
+    const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
+    const tz = timezones.find(t => t.name === timezone);
+    const gradientTz = tz?.gradientTz || timezone;
+    const hourString = formatInTimeZone(adjustedTime, gradientTz, 'HH');
+    const hours = parseInt(hourString, 10);
     return hours >= 18 || hours < 6 ? 'text-white' : 'text-black';
   };
 
@@ -256,6 +254,9 @@ export default function HorizontalWorldTimezones() {
                       <p className={`${textColor} text-[8px] opacity-75`}>
                         {tz.utcOffset}
                       </p>
+                      <p className={`${textColor} text-[8px] font-bold opacity-75`}>
+                        {tz.tzAbbr}
+                      </p>
                       <p className={`${textColor} text-[8px] font-mono`}>
                         {formatInTimeZone(
                           new Date(
@@ -294,6 +295,9 @@ export default function HorizontalWorldTimezones() {
                         tz.name,
                         'EEE'
                       )}
+                    </p>
+                    <p className={`${textColor} text-[7px] font-bold mt-0.5 opacity-75`}>
+                      {tz.tzAbbr}
                     </p>
                   </div>
                 </div>

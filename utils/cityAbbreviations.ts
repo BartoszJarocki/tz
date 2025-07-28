@@ -15,7 +15,7 @@ export const TIMEZONE_CITY_ABBREVIATIONS: Record<number, string[]> = {
   [-2]: ["FEN", "SGI"],
   [-1]: ["PRA", "AZO"],
   [0]: ["LON", "DUB", "LIS", "CAS", "ACC", "DKR"],
-  [1]: ["PAR", "BER", "ROM", "MAD", "AMS", "VIE"],
+  [1]: ["PAR", "BER", "ROM", "MAD", "AMS", "VIE", "WAW"],
   [2]: ["CAI", "ATH", "HEL", "KIV", "BUC", "IST"],
   [3]: ["MOW", "RUH", "BGW", "KWI", "NBO"],
   [4]: ["DXB", "AUH", "BAK", "TBS", "EVN"],
