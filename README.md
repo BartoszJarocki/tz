@@ -1,4 +1,4 @@
-# TZ - World Time Zone Explorer
+# TZC - Time Zone Converter
 
 Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.
 
