@@ -9,6 +9,7 @@ import {
 } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatInTimeZone } from "date-fns-tz";
+import { UserIcon } from "lucide-react";
 import {
   getHourlyTimezones,
   findClosestTimezone,
@@ -223,9 +224,11 @@ export default function HorizontalWorldTimezones() {
                     <motion.div
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute w-1 h-1 bg-orange-500 rounded-full md:left-1/2 md:-translate-x-1/2 md:-top-4 -left-5 top-1/2 -translate-y-1/2"
+                      className="absolute md:top-[-16px] md:left-1/2 md:-ml-1.5 top-1/2 left-1/2 -ml-1.5 -mt-1.5"
                       aria-hidden="true"
-                    />
+                    >
+                      <UserIcon className="w-3 h-3 text-current" />
+                    </motion.div>
                   )}
 
                   {/* Mobile layout */}
