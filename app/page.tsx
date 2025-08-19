@@ -12,8 +12,8 @@ import { getTimezoneOffset, formatInTimeZone } from 'date-fns-tz';
 import {
   getHourlyTimezones,
   findClosestTimezone,
-} from '../utils/timezoneUtils';
-import { getCityAbbreviationsForTimezone } from '../utils/cityAbbreviations';
+} from '../utils/timezone-utils';
+import { getCityAbbreviationsForTimezone } from '../utils/city-abbreviations';
 
 const HOUR_COLORS = [
   '#1A1A1A',

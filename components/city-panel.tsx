@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { formatInTimeZone } from "date-fns-tz"
-import { getCitiesForTimezone, type CityInfo } from "../utils/cityData"
+import { getCitiesForTimezone, type CityInfo } from "../utils/city-data"
 import { Crown, Users, MapPin } from "lucide-react"
 
 interface CityPanelProps {

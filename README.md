@@ -1,30 +1,50 @@
-# 50 shades of time
+# TZ - World Time Zone Explorer
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.
+
+*Built with [v0.dev](https://v0.dev) and [Claude Code](https://claude.ai/code)*
 
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/bartosz-jarockis-projects/v0-50-shades-of-time)
 [![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/sTNJefUlSQC)
 
-## Overview
+## Features
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+- **Gradient Background**: Each time zone shows a shade representing local time (dark for night, light for day)
+- **Drag Interaction**: Click and drag to explore different times across all zones
+- **Responsive Design**: Horizontal layout on desktop, vertical on mobile  
+- **Live Updates**: Real-time clock updates
+- **User Timezone Detection**: Highlights your current timezone with an orange dot
 
-## Deployment
+## Quick Start
 
-Your project is live at:
+```bash
+# Install dependencies
+pnpm install
 
-**[https://vercel.com/bartosz-jarockis-projects/v0-50-shades-of-time](https://vercel.com/bartosz-jarockis-projects/v0-50-shades-of-time)**
+# Start development server
+pnpm dev
+```
 
-## Build your app
+Open [http://localhost:3000](http://localhost:3000)
 
-Continue building your app on:
+## Tech Stack
 
-**[https://v0.dev/chat/projects/sTNJefUlSQC](https://v0.dev/chat/projects/sTNJefUlSQC)**
+- **Next.js 15** with App Router
+- **React 19** 
+- **TypeScript**
+- **Tailwind CSS**
+- **date-fns-tz** for timezone handling
+- **Framer Motion** for animations
 
 ## How It Works
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+The app displays 25 time zones (UTC-12 to UTC+12) as colored strips. Each strip's color corresponds to the local hour:
+- Darker shades = nighttime (6 PM - 6 AM)
+- Lighter shades = daytime 
+- Brightest = noon
+
+Drag horizontally (desktop) or vertically (mobile) to "time travel" and see how all zones change together.
+
+## Continue Building
+
+**[https://v0.dev/chat/projects/sTNJefUlSQC](https://v0.dev/chat/projects/sTNJefUlSQC)**
