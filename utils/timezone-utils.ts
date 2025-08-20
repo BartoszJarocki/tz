@@ -72,3 +72,85 @@ export function findClosestTimezone(timezones: TimezoneInfo[], userOffset: numbe
     return Math.abs(currentOffset - userOffset) < Math.abs(closestOffset - userOffset) ? tz : closest;
   }).name;
 }
+
+export interface TimezoneConversion {
+  timezone: string;
+  city: string;
+  time: string;
+  offset: string;
+  dayDiff?: string;
+}
+
+export function convertTimeToTimezones(
+  sourceTime: Date,
+  sourceTimezone: string,
+  targetTimezones: string[]
+): TimezoneConversion[] {
+  const timezones = getHourlyTimezones();
+  const conversions: TimezoneConversion[] = [];
+
+  for (const targetTimezone of targetTimezones) {
+    const timezoneInfo = timezones.find(tz => tz.name === targetTimezone);
+    if (!timezoneInfo) continue;
+
+    try {
+      const convertedTime = new Date(sourceTime.toLocaleString("en-US", { timeZone: targetTimezone }));
+      const timeString = formatInTimeZone(convertedTime, targetTimezone, 'h:mm a');
+      
+      const sourceDayStart = new Date(sourceTime);
+      sourceDayStart.setHours(0, 0, 0, 0);
+      
+      const targetDayStart = new Date(convertedTime);
+      targetDayStart.setHours(0, 0, 0, 0);
+      
+      const dayDifference = Math.round((targetDayStart.getTime() - sourceDayStart.getTime()) / (1000 * 60 * 60 * 24));
+      
+      let dayDiff: string | undefined;
+      if (dayDifference === 1) {
+        dayDiff = '+1 day';
+      } else if (dayDifference === -1) {
+        dayDiff = '-1 day';
+      } else if (dayDifference > 1) {
+        dayDiff = `+${dayDifference} days`;
+      } else if (dayDifference < -1) {
+        dayDiff = `${dayDifference} days`;
+      }
+
+      conversions.push({
+        timezone: targetTimezone,
+        city: timezoneInfo.cityFull,
+        time: timeString,
+        offset: timezoneInfo.tzAbbr,
+        dayDiff,
+      });
+    } catch (error) {
+      console.error(`Error converting time to ${targetTimezone}:`, error);
+    }
+  }
+
+  return conversions;
+}
+
+export function getTimezoneInfo(timezone: string): TimezoneInfo | null {
+  const timezones = getHourlyTimezones();
+  return timezones.find(tz => tz.name === timezone) || null;
+}
+
+export function searchTimezonesByCity(cityQuery: string): TimezoneInfo[] {
+  const timezones = getHourlyTimezones();
+  const query = cityQuery.toLowerCase().trim();
+  
+  return timezones.filter(tz => 
+    tz.cityFull.toLowerCase().includes(query) ||
+    tz.cityAbbr.toLowerCase().includes(query) ||
+    tz.name.toLowerCase().includes(query)
+  ).sort((a, b) => {
+    const aExact = a.cityFull.toLowerCase() === query || a.cityAbbr.toLowerCase() === query;
+    const bExact = b.cityFull.toLowerCase() === query || b.cityAbbr.toLowerCase() === query;
+    
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    
+    return a.cityFull.localeCompare(b.cityFull);
+  });
+}
