@@ -4,13 +4,15 @@
 
 interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.
 
-## 🔥 new: slack integration
-automatically convert timezone mentions in slack messages! just type patterns like `3PM CEST -> EST` and get instant conversions.
+## 🔥 new: slack & discord integrations
+automatically convert timezone mentions in both slack and discord messages! just type patterns like `3PM CEST -> EST` and get instant conversions.
 
 ### features:
 - **auto-detection**: recognizes patterns like `3PM EST -> PST` in messages
-- **thread replies**: clean, non-intrusive responses in message threads  
-- **slash commands**: use `/tz 3pm EST to PST` for manual conversions
+- **slack thread replies**: clean, non-intrusive responses in message threads  
+- **discord replies**: contextual replies to messages with timezone conversions
+- **slash commands**: use `/tz 3pm EST to PST` in both platforms for manual conversions
+- **rich embeds**: beautiful discord embeds with timezone conversion results
 - **multiple formats**: supports 12/24 hour, city names, timezone codes
 
 *built with [v0.dev](https://v0.dev) and [claude code](https://claude.ai/code)*
@@ -66,10 +68,11 @@ pnpm lint:fix
 - **date-fns-tz** for timezone handling
 - **framer motion** for animations
 
-### backend & integration
-- **slack web api** for bot integration
+### backend & integrations
+- **slack web api** for slack bot integration
+- **discord.js** for discord bot integration
 - **chrono-node** for natural language time parsing
-- **next.js api routes** for slack webhooks
+- **next.js api routes** for slack/discord webhooks
 
 ### development tools
 - **biome** for ultra-fast linting and formatting
@@ -94,8 +97,8 @@ drag horizontally (desktop) or vertically (mobile) to "time travel" and see how 
 - **react best practices** with proper hook usage
 
 ### architecture
-- **api routes**: `/api/slack/*` for slack integration
-- **utilities**: modular timezone and parsing logic
+- **api routes**: `/api/slack/*` for slack integration, `/api/discord/*` for discord integration
+- **utilities**: modular timezone and parsing logic shared between platforms
 - **components**: clean separation of ui and business logic
 
 ## continue building
