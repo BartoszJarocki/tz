@@ -1,6 +1,6 @@
 import * as chrono from 'chrono-node';
-import { getCityAbbreviationsForTimezone } from './city-abbreviations';
-import { getHourlyTimezones } from './timezone-utils';
+import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
+import { getHourlyTimezones } from '@/utils/timezone-utils';
 
 export interface ParsedTimeCommand {
   sourceTime: Date;

@@ -3,8 +3,8 @@ import {
   createErrorResponse,
   createTimezoneResponse,
   verifySlackSignature,
-} from '../../../../utils/slack-utils';
-import { convertTimeToTimezones } from '../../../../utils/timezone-utils';
+} from '@/utils/slack-utils';
+import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
   try {

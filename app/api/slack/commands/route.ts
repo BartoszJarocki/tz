@@ -5,9 +5,9 @@ import {
   createHelpResponse,
   createTimezoneResponse,
   verifySlackSignature,
-} from '../../../../utils/slack-utils';
-import { parseTimeCommand } from '../../../../utils/time-parser';
-import { convertTimeToTimezones } from '../../../../utils/timezone-utils';
+} from '@/utils/slack-utils';
+import { parseTimeCommand } from '@/utils/time-parser';
+import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
   try {

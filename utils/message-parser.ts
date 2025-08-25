@@ -1,5 +1,5 @@
-import { parseTimeCommand } from './time-parser';
-import { convertTimeToTimezones } from './timezone-utils';
+import { parseTimeCommand } from '@/utils/time-parser';
+import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export interface TimezoneConversionMatch {
   originalText: string;

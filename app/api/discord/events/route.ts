@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { GatewayIntentBits } from 'discord.js';
+
 import {
   convertTimezoneMatch,
   detectTimezoneConversions,
-} from '../../../../utils/message-parser';
-import { getBotInfo, sendDiscordReply } from '../../../../utils/discord-client';
-import { shouldProcessDiscordMessage } from '../../../../utils/discord-utils';
+} from '@/utils/message-parser';
+import { getBotInfo, sendDiscordReply } from '@/utils/discord-client';
+import { shouldProcessDiscordMessage } from '@/utils/discord-utils';
 
 export async function POST(request: NextRequest) {
   try {

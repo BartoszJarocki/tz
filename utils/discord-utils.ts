@@ -1,6 +1,6 @@
 import { APIEmbed, InteractionResponseType } from 'discord.js';
 import { verifyKey } from 'discord-interactions';
-import type { TimezoneConversion } from './timezone-utils';
+import type { TimezoneConversion } from '@/utils/timezone-utils';
 
 export interface DiscordInteractionPayload {
   id: string;

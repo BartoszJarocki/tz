@@ -4,8 +4,8 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { AnimatePresence, motion } from 'framer-motion';
 import { UserIcon } from 'lucide-react';
 import { type MouseEvent, type TouchEvent, useEffect, useRef, useState } from 'react';
-import { getCityAbbreviationsForTimezone } from '../utils/city-abbreviations';
-import { findClosestTimezone, getHourlyTimezones } from '../utils/timezone-utils';
+import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
+import { findClosestTimezone, getHourlyTimezones } from '@/utils/timezone-utils';
 
 const HOUR_COLORS = [
   '#1A1A1A',
