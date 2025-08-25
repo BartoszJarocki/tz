@@ -1,6 +1,6 @@
 import * as chrono from 'chrono-node';
-import { getHourlyTimezones } from './timezone-utils';
 import { getCityAbbreviationsForTimezone } from './city-abbreviations';
+import { getHourlyTimezones } from './timezone-utils';
 
 export interface ParsedTimeCommand {
   sourceTime: Date;
@@ -16,43 +16,43 @@ export interface TimezoneMatch {
 }
 
 const TIMEZONE_ALIASES = {
-  'EST': 'America/New_York',
-  'EDT': 'America/New_York',
-  'CST': 'America/Chicago',
-  'CDT': 'America/Chicago',
-  'MST': 'America/Denver',
-  'MDT': 'America/Denver',
-  'PST': 'America/Los_Angeles',
-  'PDT': 'America/Los_Angeles',
-  'GMT': 'Europe/London',
-  'UTC': 'UTC',
-  'CET': 'Europe/Paris',
-  'CEST': 'Europe/Paris',
-  'JST': 'Asia/Tokyo',
-  'SGT': 'Asia/Singapore',
-  'AEST': 'Australia/Sydney',
-  'AEDT': 'Australia/Sydney',
+  EST: 'America/New_York',
+  EDT: 'America/New_York',
+  CST: 'America/Chicago',
+  CDT: 'America/Chicago',
+  MST: 'America/Denver',
+  MDT: 'America/Denver',
+  PST: 'America/Los_Angeles',
+  PDT: 'America/Los_Angeles',
+  GMT: 'Europe/London',
+  UTC: 'UTC',
+  CET: 'Europe/Paris',
+  CEST: 'Europe/Paris',
+  JST: 'Asia/Tokyo',
+  SGT: 'Asia/Singapore',
+  AEST: 'Australia/Sydney',
+  AEDT: 'Australia/Sydney',
 };
 
 const CITY_ALIASES = {
-  'NYC': 'America/New_York',
-  'LA': 'America/Los_Angeles',
-  'CHI': 'America/Chicago',
-  'LON': 'Europe/London',
-  'PAR': 'Europe/Paris',
-  'TOK': 'Asia/Tokyo',
-  'SYD': 'Australia/Sydney',
-  'SIN': 'Asia/Singapore',
-  'HKG': 'Asia/Hong_Kong',
-  'BKK': 'Asia/Bangkok',
-  'DUB': 'Asia/Dubai',
-  'MOS': 'Europe/Moscow',
-  'CAI': 'Africa/Cairo',
+  NYC: 'America/New_York',
+  LA: 'America/Los_Angeles',
+  CHI: 'America/Chicago',
+  LON: 'Europe/London',
+  PAR: 'Europe/Paris',
+  TOK: 'Asia/Tokyo',
+  SYD: 'Australia/Sydney',
+  SIN: 'Asia/Singapore',
+  HKG: 'Asia/Hong_Kong',
+  BKK: 'Asia/Bangkok',
+  DUB: 'Asia/Dubai',
+  MOS: 'Europe/Moscow',
+  CAI: 'Africa/Cairo',
 };
 
 export function parseTimeCommand(text: string): ParsedTimeCommand | null {
   const cleanText = text.trim().toLowerCase();
-  
+
   if (!cleanText) return null;
 
   // Check for help command
@@ -112,28 +112,30 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
       sourceTimezone = resolveTimezone(matches[2]);
       targetTimezones = [resolveTimezone(matches[3])];
       break;
-    
-    case 2: // "now in London" or "now in London, Paris, Tokyo"
+
+    case 2: {
+      // "now in London" or "now in London, Paris, Tokyo"
       sourceTime = new Date();
       sourceTimezone = 'UTC';
       const cities = matches[2].split(/[,\s]+/).filter(city => city.length > 0);
       targetTimezones = cities.map(city => resolveTimezone(city));
       break;
-    
+    }
+
     case 3: // "meeting at 10am PST"
     case 4: // "3pm EST"
       sourceTime = parseTimeString(matches[1]);
       sourceTimezone = resolveTimezone(matches[2]);
       targetTimezones = getDefaultTimezones().filter(tz => tz !== sourceTimezone);
       break;
-    
+
     default:
       return null;
   }
 
   // Filter out invalid timezones
   targetTimezones = targetTimezones.filter(tz => tz !== 'Unknown');
-  
+
   if (targetTimezones.length === 0) {
     targetTimezones = getDefaultTimezones();
   }
@@ -149,7 +151,7 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
 
 function parseTimeString(timeStr: string): Date {
   const now = new Date();
-  
+
   // Handle "now"
   if (timeStr.toLowerCase() === 'now') {
     return now;
@@ -164,17 +166,17 @@ function parseTimeString(timeStr: string): Date {
   // Manual parsing for common formats
   const timeMatch = timeStr.match(/(\d{1,2})(?::(\d{2}))?(?:(am|pm))?/i);
   if (timeMatch) {
-    const hours = parseInt(timeMatch[1]);
-    const minutes = parseInt(timeMatch[2] || '0');
+    const hours = Number.parseInt(timeMatch[1]);
+    const minutes = Number.parseInt(timeMatch[2] || '0');
     const period = timeMatch[3]?.toLowerCase();
-    
+
     let hour24 = hours;
     if (period === 'pm' && hours !== 12) {
       hour24 += 12;
     } else if (period === 'am' && hours === 12) {
       hour24 = 0;
     }
-    
+
     const date = new Date(now);
     date.setHours(hour24, minutes, 0, 0);
     return date;
@@ -185,40 +187,39 @@ function parseTimeString(timeStr: string): Date {
 
 function resolveTimezone(input: string): string {
   const normalized = input.trim().toUpperCase();
-  
+
   // Check direct aliases
   if (TIMEZONE_ALIASES[normalized]) {
     return TIMEZONE_ALIASES[normalized];
   }
-  
+
   if (CITY_ALIASES[normalized]) {
     return CITY_ALIASES[normalized];
   }
-  
+
   // Check if it's a full timezone name
   const timezones = getHourlyTimezones();
-  const directMatch = timezones.find(tz => 
-    tz.name.toLowerCase() === input.toLowerCase()
-  );
+  const directMatch = timezones.find(tz => tz.name.toLowerCase() === input.toLowerCase());
   if (directMatch) {
     return directMatch.name;
   }
-  
+
   // Fuzzy matching for cities
-  const cityMatch = timezones.find(tz => 
-    tz.cityFull.toLowerCase().includes(input.toLowerCase()) ||
-    tz.cityAbbr.toLowerCase() === normalized.toLowerCase()
+  const cityMatch = timezones.find(
+    tz =>
+      tz.cityFull.toLowerCase().includes(input.toLowerCase()) ||
+      tz.cityAbbr.toLowerCase() === normalized.toLowerCase()
   );
   if (cityMatch) {
     return cityMatch.name;
   }
-  
+
   // Check city abbreviations utility
   const abbrevMatch = getCityAbbreviationsForTimezone(input);
   if (abbrevMatch.length > 0) {
     return abbrevMatch[0];
   }
-  
+
   return 'Unknown';
 }
 
@@ -236,13 +237,13 @@ function getDefaultTimezones(): string[] {
 export function extractTimezonesFromText(text: string): string[] {
   const words = text.split(/\s+/);
   const timezones: string[] = [];
-  
+
   for (const word of words) {
     const timezone = resolveTimezone(word);
     if (timezone !== 'Unknown') {
       timezones.push(timezone);
     }
   }
-  
+
   return timezones;
 }

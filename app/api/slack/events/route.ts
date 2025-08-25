@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
+import {
+  convertTimezoneMatch,
+  detectTimezoneConversions,
+  shouldProcessMessage,
+} from '../../../../utils/message-parser';
+import { getBotInfo, sendSimpleReply } from '../../../../utils/slack-client';
 import { verifySlackSignature } from '../../../../utils/slack-utils';
-import { detectTimezoneConversions, convertTimezoneMatch, shouldProcessMessage } from '../../../../utils/message-parser';
-import { sendSimpleReply, getBotInfo } from '../../../../utils/slack-client';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +29,12 @@ export async function POST(request: NextRequest) {
     // Handle events
     if (payload.type === 'event_callback') {
       const event = payload.event;
-      
+
       // Handle message events for timezone conversion
       if (event.type === 'message' && event.text && !event.bot_id) {
         await handleMessageEvent(event);
       }
-      
+
       return NextResponse.json({ status: 'ok' });
     }
 
@@ -41,36 +45,39 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function handleMessageEvent(event: any) {
+async function handleMessageEvent(event: {
+  type: string;
+  text: string;
+  user: string;
+  channel: string;
+  ts: string;
+  bot_id?: string;
+}) {
   try {
     // Get bot info to avoid responding to self
     const botInfo = await getBotInfo();
-    
+
     // Check if we should process this message
     if (!shouldProcessMessage(event.text, event.user, botInfo?.userId)) {
       return;
     }
-    
+
     console.log('Processing message for timezone conversion:', event.text);
-    
+
     // Detect timezone conversions in the message
     const matches = detectTimezoneConversions(event.text);
-    
+
     if (matches.length === 0) {
       return;
     }
-    
+
     // Process each match and send response
     for (const match of matches) {
       const converted = convertTimezoneMatch(match);
-      
+
       if (converted.formattedResponse) {
-        await sendSimpleReply(
-          event.channel,
-          event.ts,
-          converted.formattedResponse
-        );
-        
+        await sendSimpleReply(event.channel, event.ts, converted.formattedResponse);
+
         console.log(`Sent timezone conversion: ${converted.formattedResponse}`);
       }
     }
@@ -81,8 +88,8 @@ async function handleMessageEvent(event: any) {
 
 // Handle GET requests (for testing)
 export async function GET() {
-  return NextResponse.json({ 
+  return NextResponse.json({
     message: 'Slack Events API endpoint is working',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }

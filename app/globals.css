@@ -11,7 +11,8 @@
   }
 }
 
-html, body {
+html,
+body {
   overflow: hidden;
   position: fixed;
   width: 100%;

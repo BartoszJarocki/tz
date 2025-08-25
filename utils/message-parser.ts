@@ -12,17 +12,16 @@ export interface TimezoneConversionMatch {
 
 export function detectTimezoneConversions(text: string): TimezoneConversionMatch[] {
   const matches: TimezoneConversionMatch[] = [];
-  
+
   // Pattern to match: "time TZ -> TZ" or "time TZ to TZ"
   const pattern = /(\d{1,2}(?::\d{2})?(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|to)\s*([A-Z]{2,4})/gi;
-  
-  let match;
-  while ((match = pattern.exec(text)) !== null) {
+
+  for (const match of text.matchAll(pattern)) {
     const fullMatch = match[0];
     const sourceTime = match[1];
     const sourceTimezone = match[2];
     const targetTimezone = match[3];
-    
+
     matches.push({
       originalText: fullMatch,
       sourceTime,
@@ -30,7 +29,7 @@ export function detectTimezoneConversions(text: string): TimezoneConversionMatch
       targetTimezone,
     });
   }
-  
+
   return matches;
 }
 
@@ -39,29 +38,29 @@ export function convertTimezoneMatch(match: TimezoneConversionMatch): TimezoneCo
     // Use existing parser to handle the conversion
     const commandText = `${match.sourceTime} ${match.sourceTimezone} to ${match.targetTimezone}`;
     const parsed = parseTimeCommand(commandText);
-    
+
     if (!parsed) {
       return { ...match, formattedResponse: 'Could not parse time conversion' };
     }
-    
+
     const conversions = convertTimeToTimezones(
       parsed.sourceTime,
       parsed.sourceTimezone,
       parsed.targetTimezones
     );
-    
+
     if (conversions.length === 0) {
       return { ...match, formattedResponse: 'Could not convert timezone' };
     }
-    
+
     const conversion = conversions[0];
-    
+
     // Format: "3:00PM EST (21:00 CEST)"
     const sourceFormatted = formatTimeForDisplay(parsed.sourceTime, parsed.sourceTimezone);
     const targetFormatted = formatTimeForDisplay(parsed.sourceTime, conversion.timezone);
-    
+
     const formattedResponse = `${targetFormatted} (${sourceFormatted})`;
-    
+
     return {
       ...match,
       convertedTime: conversion.time,
@@ -82,10 +81,10 @@ function formatTimeForDisplay(date: Date, timezone: string): string {
       minute: '2-digit',
       hour12: true,
     });
-    
+
     // Get timezone abbreviation
     const tzAbbr = getTimezoneAbbreviation(timezone);
-    
+
     return `${timeStr} ${tzAbbr}`;
   } catch (error) {
     console.error('Error formatting time:', error);
@@ -97,7 +96,7 @@ function getTimezoneAbbreviation(timezone: string): string {
   // Common timezone abbreviations
   const abbreviations: { [key: string]: string } = {
     'America/New_York': 'EST',
-    'America/Los_Angeles': 'PST', 
+    'America/Los_Angeles': 'PST',
     'America/Chicago': 'CST',
     'America/Denver': 'MST',
     'Europe/London': 'GMT',
@@ -106,9 +105,9 @@ function getTimezoneAbbreviation(timezone: string): string {
     'Asia/Tokyo': 'JST',
     'Asia/Shanghai': 'CST',
     'Australia/Sydney': 'AEST',
-    'UTC': 'UTC',
+    UTC: 'UTC',
   };
-  
+
   return abbreviations[timezone] || timezone.split('/').pop() || 'TZ';
 }
 
@@ -117,7 +116,7 @@ export function shouldProcessMessage(text: string, userId: string, botUserId?: s
   if (botUserId && userId === botUserId) {
     return false;
   }
-  
+
   // Check if message contains timezone conversion pattern
   const matches = detectTimezoneConversions(text);
   return matches.length > 0;

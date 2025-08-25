@@ -18,35 +18,25 @@ export interface SlackCommandPayload {
 export interface SlackResponse {
   response_type?: 'ephemeral' | 'in_channel';
   text?: string;
-  blocks?: any[];
-  attachments?: any[];
+  blocks?: unknown[];
+  attachments?: unknown[];
 }
 
-export function verifySlackSignature(
-  signature: string,
-  timestamp: string,
-  body: string
-): boolean {
+export function verifySlackSignature(signature: string, timestamp: string, body: string): boolean {
   const signingSecret = process.env.SLACK_SIGNING_SECRET;
   if (!signingSecret) {
     throw new Error('SLACK_SIGNING_SECRET is not set');
   }
 
   const time = Math.floor(new Date().getTime() / 1000);
-  if (Math.abs(time - parseInt(timestamp)) > 300) {
+  if (Math.abs(time - Number.parseInt(timestamp)) > 300) {
     return false;
   }
 
   const baseString = `v0:${timestamp}:${body}`;
-  const mySignature = 'v0=' + 
-    crypto.createHmac('sha256', signingSecret)
-      .update(baseString, 'utf8')
-      .digest('hex');
+  const mySignature = `v0=${crypto.createHmac('sha256', signingSecret).update(baseString, 'utf8').digest('hex')}`;
 
-  return crypto.timingSafeEqual(
-    Buffer.from(mySignature, 'utf8'),
-    Buffer.from(signature, 'utf8')
-  );
+  return crypto.timingSafeEqual(Buffer.from(mySignature, 'utf8'), Buffer.from(signature, 'utf8'));
 }
 
 export function createTimezoneResponse(
@@ -60,16 +50,17 @@ export function createTimezoneResponse(
   originalTime?: string,
   originalTimezone?: string
 ): SlackResponse {
-  const title = originalTime && originalTimezone
-    ? `🕐  ${originalTime} ${originalTimezone} converts to:`
-    : `🕐  Time Conversion:`;
+  const title =
+    originalTime && originalTimezone
+      ? `🕐  ${originalTime} ${originalTimezone} converts to:`
+      : '🕐  Time Conversion:';
 
-  let text = title + '\n';
-  
-  conversions.forEach(conv => {
+  let text = `${title}\n`;
+
+  for (const conv of conversions) {
     const dayIndicator = conv.dayDiff ? ` ${conv.dayDiff}` : '';
     text += `• ${conv.time} ${conv.offset} (${conv.city})${dayIndicator}\n`;
-  });
+  }
 
   return {
     response_type: 'ephemeral',
@@ -106,19 +97,22 @@ export function createHelpResponse(): SlackResponse {
   };
 }
 
-export function formatTimeWithDay(date: Date, timezone: string): {
+export function formatTimeWithDay(
+  date: Date,
+  timezone: string
+): {
   time: string;
   dayDiff: string | undefined;
 } {
   const now = new Date();
   const targetTime = new Date(date.getTime());
-  
+
   const nowDay = Math.floor(now.getTime() / (1000 * 60 * 60 * 24));
   const targetDay = Math.floor(targetTime.getTime() / (1000 * 60 * 60 * 24));
-  
+
   let dayDiff: string | undefined;
   const dayDifference = targetDay - nowDay;
-  
+
   if (dayDifference === 1) {
     dayDiff = '+1 day';
   } else if (dayDifference === -1) {
@@ -130,6 +124,6 @@ export function formatTimeWithDay(date: Date, timezone: string): {
   }
 
   const time = formatInTimeZone(targetTime, timezone, 'h:mm a');
-  
+
   return { time, dayDiff };
 }

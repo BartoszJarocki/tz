@@ -31,7 +31,7 @@ export async function sendUnfurlResponse(
 ): Promise<void> {
   try {
     const client = getSlackClient();
-    
+
     const attachment: UnfurlAttachment = {
       color: '#36C5F0', // Slack blue
       text: `🕐  ${conversion}`,
@@ -43,7 +43,7 @@ export async function sendUnfurlResponse(
       text: `🕐  ${conversion}`,
       attachments: [attachment],
     });
-    
+
     console.log('Unfurl response sent successfully');
   } catch (error) {
     console.error('Error sending unfurl response:', error);
@@ -58,13 +58,13 @@ export async function sendSimpleReply(
 ): Promise<void> {
   try {
     const client = getSlackClient();
-    
+
     await client.chat.postMessage({
       channel,
       thread_ts: timestamp,
       text,
     });
-    
+
     console.log('Reply sent successfully');
   } catch (error) {
     console.error('Error sending reply:', error);
@@ -76,14 +76,14 @@ export async function getBotInfo(): Promise<{ userId: string; name: string } | n
   try {
     const client = getSlackClient();
     const response = await client.auth.test();
-    
+
     if (response.ok && response.user_id && response.user) {
       return {
         userId: response.user_id,
         name: response.user,
       };
     }
-    
+
     return null;
   } catch (error) {
     console.error('Error getting bot info:', error);

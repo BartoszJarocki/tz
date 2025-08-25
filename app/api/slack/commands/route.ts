@@ -1,5 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { verifySlackSignature, createTimezoneResponse, createErrorResponse, createHelpResponse, type SlackCommandPayload } from '../../../../utils/slack-utils';
+import { type NextRequest, NextResponse } from 'next/server';
+import {
+  type SlackCommandPayload,
+  createErrorResponse,
+  createHelpResponse,
+  createTimezoneResponse,
+  verifySlackSignature,
+} from '../../../../utils/slack-utils';
 import { parseTimeCommand } from '../../../../utils/time-parser';
 import { convertTimeToTimezones } from '../../../../utils/timezone-utils';
 
@@ -31,19 +37,28 @@ export async function POST(request: NextRequest) {
       trigger_id: params.get('trigger_id') || '',
     };
 
-    console.log(`Slash command received: ${payload.command} ${payload.text} from ${payload.user_name}`);
+    console.log(
+      `Slash command received: ${payload.command} ${payload.text} from ${payload.user_name}`
+    );
 
     // Handle help request
-    if (!payload.text || payload.text.trim() === '' || payload.text.trim() === 'help' || payload.text.trim() === '?') {
+    if (
+      !payload.text ||
+      payload.text.trim() === '' ||
+      payload.text.trim() === 'help' ||
+      payload.text.trim() === '?'
+    ) {
       return NextResponse.json(createHelpResponse());
     }
 
     // Parse the command
     const parsedCommand = parseTimeCommand(payload.text);
     if (!parsedCommand) {
-      return NextResponse.json(createErrorResponse(
-        'Could not understand the time conversion request. Type `/tz help` for usage examples.'
-      ));
+      return NextResponse.json(
+        createErrorResponse(
+          'Could not understand the time conversion request. Type `/tz help` for usage examples.'
+        )
+      );
     }
 
     // Convert the time
@@ -55,20 +70,24 @@ export async function POST(request: NextRequest) {
       );
 
       if (conversions.length === 0) {
-        return NextResponse.json(createErrorResponse(
-          'No valid timezones found for conversion. Please check your timezone names.'
-        ));
+        return NextResponse.json(
+          createErrorResponse(
+            'No valid timezones found for conversion. Please check your timezone names.'
+          )
+        );
       }
 
       // Create response
-      const sourceTimeString = parsedCommand.isNow ? 'Current time' : 
-        parsedCommand.sourceTime.toLocaleTimeString('en-US', { 
-          hour: 'numeric', 
-          minute: '2-digit', 
-          hour12: true 
-        });
-      
-      const sourceTimezoneInfo = parsedCommand.sourceTimezone === 'UTC' ? 'UTC' : parsedCommand.sourceTimezone;
+      const sourceTimeString = parsedCommand.isNow
+        ? 'Current time'
+        : parsedCommand.sourceTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+          });
+
+      const sourceTimezoneInfo =
+        parsedCommand.sourceTimezone === 'UTC' ? 'UTC' : parsedCommand.sourceTimezone;
 
       const response = createTimezoneResponse(
         conversions,
@@ -77,19 +96,20 @@ export async function POST(request: NextRequest) {
       );
 
       return NextResponse.json(response);
-
     } catch (conversionError) {
       console.error('Error converting timezone:', conversionError);
-      return NextResponse.json(createErrorResponse(
-        'Error performing timezone conversion. Please check your input and try again.'
-      ));
+      return NextResponse.json(
+        createErrorResponse(
+          'Error performing timezone conversion. Please check your input and try again.'
+        )
+      );
     }
-
   } catch (error) {
     console.error('Error handling Slack command:', error);
-    return NextResponse.json(createErrorResponse(
-      'An internal error occurred. Please try again later.'
-    ), { status: 500 });
+    return NextResponse.json(
+      createErrorResponse('An internal error occurred. Please try again later.'),
+      { status: 500 }
+    );
   }
 }
 
@@ -97,10 +117,10 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const text = searchParams.get('text') || 'help';
-  
+
   return NextResponse.json({
     message: 'Slack Commands API endpoint is working',
     example_usage: `/tz ${text}`,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }
