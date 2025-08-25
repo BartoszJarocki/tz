@@ -61,8 +61,8 @@ export function createTimezoneResponse(
   originalTimezone?: string
 ): SlackResponse {
   const title = originalTime && originalTimezone
-    ? `🕐 ${originalTime} ${originalTimezone} converts to:`
-    : `🕐 Time Conversion:`;
+    ? `🕐  ${originalTime} ${originalTimezone} converts to:`
+    : `🕐  Time Conversion:`;
 
   let text = title + '\n';
   
@@ -80,12 +80,12 @@ export function createTimezoneResponse(
 export function createErrorResponse(error: string): SlackResponse {
   return {
     response_type: 'ephemeral',
-    text: `❌ ${error}`,
+    text: `❌  ${error}`,
   };
 }
 
 export function createHelpResponse(): SlackResponse {
-  const helpText = `🕐 **Timezone Converter Help**
+  const helpText = `🕐  **Timezone Converter Help**
 
 **Usage examples:**
 • \`/tz 3pm EST to PST\` - Convert 3pm EST to PST
