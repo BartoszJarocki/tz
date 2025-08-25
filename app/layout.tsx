@@ -12,10 +12,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <title>TZC - Time Zone Converter</title>
+        <title>tzc - time zone converter</title>
         <meta
           name="description"
-          content="Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles."
+          content="interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles. automatically convert timezone mentions in slack messages!"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" type="image/png" href="/apple-touch-icon.png" />
@@ -30,29 +30,39 @@ export default function RootLayout({
 }
 
 export const metadata = {
-  title: 'TZC - Time Zone Converter',
+  title: 'tzc - time zone converter',
   description:
-    'Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.',
+    'interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles. automatically convert timezone mentions in slack messages!',
   generator: 'v0.dev',
+  keywords: ['timezone', 'time zone', 'converter', 'slack', 'bot', 'visualization', 'gradient', 'world clock'],
+  authors: [{ name: 'bartosz jarocki' }],
+  creator: 'bartosz jarocki',
   openGraph: {
-    title: 'TZC - Time Zone Converter',
+    title: 'tzc - time zone converter',
     description:
-      'Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.',
+      'interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles',
+    url: 'https://tzc.app',
+    siteName: 'tzc',
     type: 'website',
     images: [
       {
-        url: '/opengraph-image',
+        url: '/assets/screenshot.png',
         width: 1200,
         height: 630,
-        alt: 'TZC - Time Zone Converter',
+        alt: 'timezone visualization with gradient day/night cycle',
       },
     ],
+    locale: 'en_US',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TZC - Time Zone Converter',
+    title: 'tzc - time zone converter',
     description:
-      'Interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles.',
-    images: ['/opengraph-image'],
+      'interactive visualization of world time zones with slack integration',
+    images: ['/assets/screenshot.png'],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
