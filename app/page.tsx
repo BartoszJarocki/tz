@@ -2,10 +2,11 @@
 
 import { formatInTimeZone } from 'date-fns-tz';
 import { AnimatePresence, motion } from 'framer-motion';
-import { UserIcon } from 'lucide-react';
-import { type MouseEvent, type TouchEvent, useEffect, useRef, useState } from 'react';
+import { UserIcon, Command } from 'lucide-react';
+import { type MouseEvent, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
 import { findClosestTimezone, getHourlyTimezones } from '@/utils/timezone-utils';
+import { TimezoneCommand } from '@/components/timezone-command';
 
 const HOUR_COLORS = [
   '#1A1A1A',
@@ -41,7 +42,7 @@ function getGradientColor(hour: number): string {
 export default function HorizontalWorldTimezones() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState('');
-  const timezones = getHourlyTimezones();
+  const timezones = useMemo(() => getHourlyTimezones(), []);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [startY, setStartY] = useState(0);
@@ -49,6 +50,7 @@ export default function HorizontalWorldTimezones() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lastOffsetRef = useRef(0);
   const [hoveredTimezone, setHoveredTimezone] = useState<string | null>(null);
+  const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -68,6 +70,22 @@ export default function HorizontalWorldTimezones() {
 
     return () => clearInterval(timer);
   }, [isDragging, timezones]);
+
+  // Keyboard shortcut handler for command palette
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+        event.preventDefault();
+        setCommandOpen(true);
+      }
+      if (event.key === 'Escape') {
+        setCommandOpen(false);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleMouseDown = (e: MouseEvent) => {
     setIsDragging(true);
@@ -337,6 +355,32 @@ export default function HorizontalWorldTimezones() {
           </div>
         ))}
       </div>
+
+      {/* Command palette trigger button */}
+      <motion.button
+        initial={{ opacity: 0, scale: 0 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.5 }}
+        onClick={() => setCommandOpen(true)}
+        className="fixed top-4 right-4 z-10 pointer-events-auto bg-white/10 backdrop-blur-sm rounded-full p-3 text-white hover:bg-white/20 transition-all duration-200 shadow-lg border border-white/20"
+        title="Open timezone converter (⌘K)"
+        aria-label="Open timezone converter"
+      >
+        <Command className="w-5 h-5" />
+      </motion.button>
+
+      {/* Command palette tooltip hint */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1, duration: 0.3 }}
+        className="fixed top-16 right-4 z-10 pointer-events-none bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm"
+      >
+        Press ⌘K
+      </motion.div>
+
+      {/* Timezone Command Palette */}
+      <TimezoneCommand open={commandOpen} onOpenChange={setCommandOpen} />
     </div>
   );
 }

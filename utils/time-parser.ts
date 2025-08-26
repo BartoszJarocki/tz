@@ -62,16 +62,16 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
 
   // Parse different command patterns
   const patterns = [
-    // "3pm EST to PST"
-    /(\d{1,2}(?::\d{2})?(?:am|pm)?) (\w+) to (\w+)/i,
+    // "3pm EST to PST" or "3 pm EST to PST"
+    /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?) (\w+) to (.+)/i,
     // "14:00 Paris to Tokyo"
-    /(\d{1,2}:\d{2}) (\w+) to (\w+)/i,
-    // "now in London"
+    /(\d{1,2}:\d{2}) (\w+) to (.+)/i,
+    // "now in London" or "now in London, Paris, Tokyo"
     /(now) in (.+)/i,
-    // "meeting at 10am PST"
-    /(?:meeting )?at (\d{1,2}(?::\d{2})?(?:am|pm)?) (\w+)/i,
-    // Just timezone conversion "3pm EST"
-    /(\d{1,2}(?::\d{2})?(?:am|pm)?) (\w+)$/i,
+    // "meeting at 10am PST" or "at 10 am PST"
+    /(?:meeting\s+)?at\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm)?) (\w+)/i,
+    // Just timezone conversion "3pm EST" or "3 pm EST"
+    /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?) (\w+)$/i,
   ];
 
   let matches: RegExpMatchArray | null = null;
@@ -106,11 +106,13 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
   const isNow = matches[1]?.toLowerCase() === 'now';
 
   switch (patternType) {
-    case 0: // "3pm EST to PST"
+    case 0: // "3pm EST to PST" or "3pm EST to PST, CET, JST"
     case 1: // "14:00 Paris to Tokyo"
       sourceTime = parseTimeString(matches[1]);
       sourceTimezone = resolveTimezone(matches[2]);
-      targetTimezones = [resolveTimezone(matches[3])];
+      // Handle multiple target timezones separated by commas
+      const targets = matches[3].split(/[,\s]+/).filter(tz => tz.length > 0);
+      targetTimezones = targets.map(tz => resolveTimezone(tz));
       break;
 
     case 2: {
@@ -163,8 +165,8 @@ function parseTimeString(timeStr: string): Date {
     return chronoParsed;
   }
 
-  // Manual parsing for common formats
-  const timeMatch = timeStr.match(/(\d{1,2})(?::(\d{2}))?(?:(am|pm))?/i);
+  // Manual parsing for common formats, handle spaces before am/pm
+  const timeMatch = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(?:(am|pm))?/i);
   if (timeMatch) {
     const hours = Number.parseInt(timeMatch[1]);
     const minutes = Number.parseInt(timeMatch[2] || '0');
