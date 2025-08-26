@@ -31,7 +31,7 @@ export function detectTimezoneConversions(text: string): TimezoneConversionMatch
   const decodedText = decodeHtmlEntities(text);
 
   // Pattern to match: "time TZ -> TZ" or "time TZ to TZ"
-  const pattern = /(\d{1,2}(?::\d{2})?(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|to)\s*([A-Z]{2,4})/gi;
+  const pattern = /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|to)\s*([A-Z]{2,4})/gi;
 
   for (const match of decodedText.matchAll(pattern)) {
     const fullMatch = match[0];
@@ -74,7 +74,7 @@ export function convertTimezoneMatch(match: TimezoneConversionMatch): TimezoneCo
 
     // Format: "3:00PM EST (21:00 CEST)"
     const sourceFormatted = formatTimeForDisplay(parsed.sourceTime, parsed.sourceTimezone);
-    const targetFormatted = formatTimeForDisplay(parsed.sourceTime, conversion.timezone);
+    const targetFormatted = conversion.time;
 
     const formattedResponse = `${targetFormatted} (${sourceFormatted})`;
 
