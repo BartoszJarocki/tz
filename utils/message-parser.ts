@@ -1,6 +1,20 @@
 import { parseTimeCommand } from '@/utils/time-parser';
 import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
+function decodeHtmlEntities(text: string): string {
+  // Simple HTML entity decoder for common entities that Slack uses
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&#x60;/g, '`')
+    .replace(/&#x3D;/g, '=');
+}
+
 export interface TimezoneConversionMatch {
   originalText: string;
   sourceTime: string;
@@ -13,10 +27,13 @@ export interface TimezoneConversionMatch {
 export function detectTimezoneConversions(text: string): TimezoneConversionMatch[] {
   const matches: TimezoneConversionMatch[] = [];
 
+  // Decode HTML entities that Slack encodes
+  const decodedText = decodeHtmlEntities(text);
+
   // Pattern to match: "time TZ -> TZ" or "time TZ to TZ"
   const pattern = /(\d{1,2}(?::\d{2})?(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|to)\s*([A-Z]{2,4})/gi;
 
-  for (const match of text.matchAll(pattern)) {
+  for (const match of decodedText.matchAll(pattern)) {
     const fullMatch = match[0];
     const sourceTime = match[1];
     const sourceTimezone = match[2];
