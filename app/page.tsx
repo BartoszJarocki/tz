@@ -247,7 +247,7 @@ export default function HorizontalWorldTimezones() {
                       className="absolute md:top-[-16px] md:left-1/2 md:-ml-1.5 top-1/2 left-1/2 -ml-1.5 -mt-1.5"
                       aria-hidden="true"
                     >
-                      <UserIcon className="w-3 h-3 text-current" />
+                      <UserIcon className={`w-3 h-3 ${textColor}`} />
                     </motion.div>
                   )}
 
