@@ -11,15 +11,24 @@ import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('⚡ Slack slash command received');
     const body = await request.text();
     const timestamp = request.headers.get('x-slack-request-timestamp') || '';
     const signature = request.headers.get('x-slack-signature') || '';
 
+    console.log('📦 Command request details:', {
+      hasBody: !!body,
+      hasTimestamp: !!timestamp,
+      hasSignature: !!signature,
+      bodyLength: body.length
+    });
+
     // Verify Slack signature
     if (!verifySlackSignature(signature, timestamp, body)) {
-      console.error('Invalid Slack signature');
+      console.error('❌ Invalid Slack slash command signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
+    console.log('✅ Slack slash command signature verified');
 
     // Parse the form data
     const params = new URLSearchParams(body);

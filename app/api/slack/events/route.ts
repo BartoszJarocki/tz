@@ -4,7 +4,7 @@ import {
   detectTimezoneConversions,
   shouldProcessMessage,
 } from '@/utils/message-parser';
-import { getBotInfo, sendSimpleReply } from '@/utils/slack-client';
+import { getBotInfo, sendSimpleReply, getSlackClient } from '@/utils/slack-client';
 import { verifySlackSignature } from '@/utils/slack-utils';
 
 export async function POST(request: NextRequest) {
@@ -18,8 +18,20 @@ export async function POST(request: NextRequest) {
       hasBody: !!body,
       hasTimestamp: !!timestamp,
       hasSignature: !!signature,
-      bodyLength: body.length
+      bodyLength: body.length,
+      url: request.url,
+      method: request.method,
+      userAgent: request.headers.get('user-agent')
     });
+
+    console.log('📋 Raw body preview:', body.substring(0, 200));
+    
+    // Log all headers for debugging
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    console.log('📨 All headers:', headers);
 
     // Verify Slack signature
     if (!verifySlackSignature(signature, timestamp, body)) {
@@ -52,8 +64,20 @@ export async function POST(request: NextRequest) {
       if (event.type === 'message' && event.text && !event.bot_id) {
         console.log('💬 Processing message:', event.text);
         await handleMessageEvent(event);
-      } else {
-        console.log('⏭️ Skipping message:', {
+      } 
+      // Handle channel creation - auto-join new channels
+      else if (event.type === 'channel_created') {
+        console.log('🆕 New channel created:', event.channel?.name);
+        await autoJoinChannel(event.channel?.id);
+      }
+      // Handle app installation - join all channels
+      else if (event.type === 'app_home_opened') {
+        console.log('🏠 App home opened, checking channel memberships');
+        // Could trigger auto-join logic here
+      }
+      else {
+        console.log('⏭️ Skipping event:', {
+          type: event.type,
           isMessage: event.type === 'message',
           hasText: !!event.text,
           isBot: !!event.bot_id
@@ -126,6 +150,19 @@ async function handleMessageEvent(event: {
     }
   } catch (error) {
     console.error('💥 Error handling message event:', error);
+  }
+}
+
+async function autoJoinChannel(channelId: string | undefined) {
+  if (!channelId) return;
+  
+  try {
+    console.log('🔗 Auto-joining channel:', channelId);
+    const client = getSlackClient();
+    await client.conversations.join({ channel: channelId });
+    console.log('✅ Successfully joined channel:', channelId);
+  } catch (error) {
+    console.error('❌ Failed to auto-join channel:', error);
   }
 }
 
