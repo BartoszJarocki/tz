@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import {
-  type SlackCommandPayload,
   createErrorResponse,
   createHelpResponse,
   createTimezoneResponse,
+  type SlackCommandPayload,
   verifySlackSignature,
 } from '@/utils/slack-utils';
 import { parseTimeCommand } from '@/utils/time-parser';
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       hasBody: !!body,
       hasTimestamp: !!timestamp,
       hasSignature: !!signature,
-      bodyLength: body.length
+      bodyLength: body.length,
     });
 
     // Verify Slack signature

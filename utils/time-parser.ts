@@ -91,7 +91,7 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
     if (parsed) {
       return {
         sourceTime: parsed,
-        sourceTimezone: 'UTC',
+        sourceTimezone: '__absolute__', // Natural language parsing gives absolute time
         targetTimezones: getDefaultTimezones(),
         originalText: text,
         isNow: false,
@@ -107,18 +107,20 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
 
   switch (patternType) {
     case 0: // "3pm EST to PST" or "3pm EST to PST, CET, JST"
-    case 1: // "14:00 Paris to Tokyo"
+    case 1: {
+      // "14:00 Paris to Tokyo"
       sourceTime = parseTimeString(matches[1]);
       sourceTimezone = resolveTimezone(matches[2]);
       // Handle multiple target timezones separated by commas
       const targets = matches[3].split(/[,\s]+/).filter(tz => tz.length > 0);
       targetTimezones = targets.map(tz => resolveTimezone(tz));
       break;
+    }
 
     case 2: {
       // "now in London" or "now in London, Paris, Tokyo"
       sourceTime = new Date();
-      sourceTimezone = 'UTC';
+      sourceTimezone = '__absolute__'; // Special token for absolute time
       const cities = matches[2].split(/[,\s]+/).filter(city => city.length > 0);
       targetTimezones = cities.map(city => resolveTimezone(city));
       break;
@@ -216,10 +218,13 @@ function resolveTimezone(input: string): string {
     return cityMatch.name;
   }
 
-  // Check city abbreviations utility
-  const abbrevMatch = getCityAbbreviationsForTimezone(input);
-  if (abbrevMatch.length > 0) {
-    return abbrevMatch[0];
+  // Check city abbreviations utility - need to find timezone by city abbrev
+  const timezonesByAbbrev = timezones.filter(tz => {
+    const abbrevs = getCityAbbreviationsForTimezone(tz.offset);
+    return abbrevs.includes(normalized);
+  });
+  if (timezonesByAbbrev.length > 0) {
+    return timezonesByAbbrev[0].name;
   }
 
   return 'Unknown';
@@ -237,7 +242,11 @@ function getDefaultTimezones(): string[] {
 }
 
 export function extractTimezonesFromText(text: string): string[] {
-  const words = text.split(/\s+/);
+  if (!text || text.trim() === '') {
+    return [];
+  }
+
+  const words = text.split(/\s+/).filter(word => word.length > 0);
   const timezones: string[] = [];
 
   for (const word of words) {

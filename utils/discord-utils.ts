@@ -1,4 +1,4 @@
-import { APIEmbed, InteractionResponseType } from 'discord.js';
+import { type APIEmbed, InteractionResponseType } from 'discord.js';
 import { verifyKey } from 'discord-interactions';
 import type { TimezoneConversion } from '@/utils/timezone-utils';
 
@@ -79,7 +79,7 @@ export function createDiscordEmbedResponse(
   ephemeral = false
 ) {
   const embed: APIEmbed = {
-    color: 0x5865F2, // Discord blurple
+    color: 0x5865f2, // Discord blurple
     title: '🌍 Timezone Conversion',
     fields: [],
     timestamp: new Date().toISOString(),
@@ -91,7 +91,7 @@ export function createDiscordEmbedResponse(
     embed.description = '**Current time conversions:**';
   }
 
-  conversions.forEach((conversion) => {
+  conversions.forEach(conversion => {
     const timeStr = conversion.time.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -124,7 +124,7 @@ export function createDiscordEmbedResponse(
 
 export function createDiscordErrorResponse(message: string, ephemeral = true) {
   const embed: APIEmbed = {
-    color: 0xFF0000, // Red color for errors
+    color: 0xff0000, // Red color for errors
     title: '❌ Error',
     description: message,
     timestamp: new Date().toISOString(),
@@ -141,7 +141,7 @@ export function createDiscordErrorResponse(message: string, ephemeral = true) {
 
 export function createDiscordHelpResponse(ephemeral = true) {
   const embed: APIEmbed = {
-    color: 0x00FF00, // Green color for help
+    color: 0x00ff00, // Green color for help
     title: '🕐 Timezone Converter Help',
     description: 'Convert times between different timezones',
     fields: [

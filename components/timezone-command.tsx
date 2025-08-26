@@ -1,8 +1,8 @@
 'use client';
 
+import { formatInTimeZone } from 'date-fns-tz';
 import { Clock, Copy, Globe } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
-import { formatInTimeZone } from 'date-fns-tz';
 import {
   Command,
   CommandDialog,
@@ -13,7 +13,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/components/ui/command';
-import { parseTimeCommand, type ParsedTimeCommand } from '@/utils/time-parser';
+import { type ParsedTimeCommand, parseTimeCommand } from '@/utils/time-parser';
 import { convertTimeToTimezones, type TimezoneConversion } from '@/utils/timezone-utils';
 
 interface TimezoneCommandProps {
@@ -59,7 +59,7 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
           console.log('Converting timezones:', {
             sourceTime: parsed.sourceTime,
             sourceTimezone: parsed.sourceTimezone,
-            targetTimezones: parsed.targetTimezones
+            targetTimezones: parsed.targetTimezones,
           });
           const results = convertTimeToTimezones(
             parsed.sourceTime,
@@ -85,7 +85,7 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
     const timeString = `${conversion.time} ${conversion.offset} (${conversion.city})${
       conversion.dayDiff ? ` ${conversion.dayDiff}` : ''
     }`;
-    
+
     navigator.clipboard.writeText(timeString).then(() => {
       // Add to recent commands if it's a valid command
       if (parsedCommand) {
@@ -99,11 +99,14 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
     setQuery(command);
   }, []);
 
-  const addToRecentCommands = useCallback((command: string) => {
-    const updated = [command, ...recentCommands.filter(c => c !== command)].slice(0, 5);
-    setRecentCommands(updated);
-    localStorage.setItem('timezone-recent-commands', JSON.stringify(updated));
-  }, [recentCommands]);
+  const addToRecentCommands = useCallback(
+    (command: string) => {
+      const updated = [command, ...recentCommands.filter(c => c !== command)].slice(0, 5);
+      setRecentCommands(updated);
+      localStorage.setItem('timezone-recent-commands', JSON.stringify(updated));
+    },
+    [recentCommands]
+  );
 
   const suggestedCommands = [
     '3pm EST to PST',
@@ -126,26 +129,20 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
             <>
               {recentCommands.length > 0 && (
                 <CommandGroup heading="Recent">
-                  {recentCommands.map((command) => (
-                    <CommandItem
-                      key={command}
-                      onSelect={() => handleSelectRecentCommand(command)}
-                    >
+                  {recentCommands.map(command => (
+                    <CommandItem key={command} onSelect={() => handleSelectRecentCommand(command)}>
                       <Clock className="mr-2 h-4 w-4" />
                       {command}
                     </CommandItem>
                   ))}
                 </CommandGroup>
               )}
-              
+
               <CommandSeparator />
-              
+
               <CommandGroup heading="Try these examples">
-                {suggestedCommands.map((command) => (
-                  <CommandItem
-                    key={command}
-                    onSelect={() => handleSelectRecentCommand(command)}
-                  >
+                {suggestedCommands.map(command => (
+                  <CommandItem key={command} onSelect={() => handleSelectRecentCommand(command)}>
                     <Globe className="mr-2 h-4 w-4" />
                     {command}
                   </CommandItem>
@@ -155,9 +152,7 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
           )}
 
           {query && !parsedCommand && (
-            <CommandEmpty>
-              Try formats like "3pm EST to PST" or "now in London"
-            </CommandEmpty>
+            <CommandEmpty>Try formats like "3pm EST to PST" or "now in London"</CommandEmpty>
           )}
 
           {parsedCommand && conversions.length > 0 && (
@@ -168,8 +163,10 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
                   parsedCommand.sourceTimezone,
                   'h:mm a'
                 );
-                const sourceInfo = parsedCommand.sourceTimezone.split('/').pop()?.replace('_', ' ') || parsedCommand.sourceTimezone;
-                
+                const sourceInfo =
+                  parsedCommand.sourceTimezone.split('/').pop()?.replace('_', ' ') ||
+                  parsedCommand.sourceTimezone;
+
                 return (
                   <CommandItem
                     key={conversion.timezone}
@@ -185,14 +182,10 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
                         </span>
                       </div>
                       {conversion.dayDiff && (
-                        <span className="text-xs text-muted-foreground">
-                          {conversion.dayDiff}
-                        </span>
+                        <span className="text-xs text-muted-foreground">{conversion.dayDiff}</span>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground ml-6">
-                      {conversion.city}
-                    </div>
+                    <div className="text-sm text-muted-foreground ml-6">{conversion.city}</div>
                     {index === 0 && (
                       <div className="text-xs text-muted-foreground ml-6 mt-1">
                         From {sourceTime} {sourceInfo}

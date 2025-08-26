@@ -1,4 +1,4 @@
-import { formatInTimeZone, getTimezoneOffset } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime, getTimezoneOffset, toZonedTime } from 'date-fns-tz';
 
 /**
  * Timezone information interface
@@ -256,19 +256,16 @@ export function getHourlyTimezones(): TimezoneInfo[] {
   return hourlyTimezones;
 }
 
-/**
- * Gets the current timezone offset in hours for a given timezone
- */
-function getCurrentTimezoneOffset(timezoneName: string, date: Date = new Date()): number {
-  const offsetMs = getTimezoneOffset(timezoneName, date);
-  return offsetMs / (1000 * 60 * 60); // Convert milliseconds to hours
-}
-
 export function findClosestTimezone(timezones: TimezoneInfo[], userOffset: number): string {
   const now = new Date();
   return timezones.reduce((closest, tz) => {
-    const currentOffset = getCurrentTimezoneOffset(tz.name, now);
-    const closestOffset = getCurrentTimezoneOffset(closest.name, now);
+    const currentOffsetMs = getTimezoneOffset(tz.name, now);
+    const closestOffsetMs = getTimezoneOffset(closest.name, now);
+
+    // Convert milliseconds to hours for comparison
+    const currentOffset = currentOffsetMs / (1000 * 60 * 60);
+    const closestOffset = closestOffsetMs / (1000 * 60 * 60);
+
     return Math.abs(currentOffset - userOffset) < Math.abs(closestOffset - userOffset)
       ? tz
       : closest;
@@ -296,19 +293,36 @@ export function convertTimeToTimezones(
     if (!timezoneInfo) continue;
 
     try {
-      const convertedTime = new Date(
-        sourceTime.toLocaleString('en-US', { timeZone: targetTimezone })
-      );
-      const timeString = formatInTimeZone(convertedTime, targetTimezone, 'h:mm a');
+      let timeToConvert: Date;
+      
+      // Handle different types of source time scenarios
+      if (sourceTimezone === '__absolute__') {
+        // For "now" commands - sourceTime is already an absolute point in time
+        timeToConvert = sourceTime;
+      } else {
+        // For timezone-specific times like "3pm EST" - convert from source timezone to UTC
+        timeToConvert = fromZonedTime(sourceTime, sourceTimezone);
+      }
+      
+      // Format the time in the target timezone
+      const timeString = formatInTimeZone(timeToConvert, targetTimezone, 'h:mm a');
 
-      const sourceDayStart = new Date(sourceTime);
-      sourceDayStart.setHours(0, 0, 0, 0);
+      // Calculate day difference by comparing the date parts in each timezone
+      let sourceDate: string;
+      if (sourceTimezone === '__absolute__') {
+        // For absolute times, compare against UTC as reference
+        sourceDate = formatInTimeZone(timeToConvert, 'UTC', 'yyyy-MM-dd');
+      } else {
+        sourceDate = formatInTimeZone(timeToConvert, sourceTimezone, 'yyyy-MM-dd');
+      }
+      
+      const targetDate = formatInTimeZone(timeToConvert, targetTimezone, 'yyyy-MM-dd');
 
-      const targetDayStart = new Date(convertedTime);
-      targetDayStart.setHours(0, 0, 0, 0);
+      const sourceDateObj = new Date(sourceDate);
+      const targetDateObj = new Date(targetDate);
 
       const dayDifference = Math.round(
-        (targetDayStart.getTime() - sourceDayStart.getTime()) / (1000 * 60 * 60 * 24)
+        (targetDateObj.getTime() - sourceDateObj.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       let dayDiff: string | undefined;

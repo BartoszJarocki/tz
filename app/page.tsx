@@ -1,38 +1,49 @@
-'use client';
+"use client";
 
-import { formatInTimeZone } from 'date-fns-tz';
-import { AnimatePresence, motion } from 'framer-motion';
-import { UserIcon, Command } from 'lucide-react';
-import { type MouseEvent, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
-import { findClosestTimezone, getHourlyTimezones } from '@/utils/timezone-utils';
-import { TimezoneCommand } from '@/components/timezone-command';
+import { formatInTimeZone } from "date-fns-tz";
+import { AnimatePresence, motion } from "framer-motion";
+import { Command, UserIcon } from "lucide-react";
+import {
+  type MouseEvent,
+  type TouchEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { TimezoneCommand } from "@/components/timezone-command";
+import { getCityAbbreviationsForTimezone } from "@/utils/city-abbreviations";
+import {
+  findClosestTimezone,
+  getHourlyTimezones,
+} from "@/utils/timezone-utils";
 
 const HOUR_COLORS = [
-  '#1A1A1A',
-  '#262626',
-  '#333333',
-  '#404040',
-  '#4D4D4D',
-  '#595959',
-  '#666666',
-  '#808080',
-  '#999999',
-  '#B3B3B3',
-  '#CCCCCC',
-  '#E6E6E6',
-  '#FFFFFF',
-  '#E6E6E6',
-  '#CCCCCC',
-  '#B3B3B3',
-  '#999999',
-  '#808080',
-  '#666666',
-  '#595959',
-  '#4D4D4D',
-  '#404040',
-  '#333333',
-  '#262626',
+  "#1A1A1A",
+  "#262626",
+  "#333333",
+  "#404040",
+  "#4D4D4D",
+  "#595959",
+  "#666666",
+  "#808080",
+  "#999999",
+  "#B3B3B3",
+  "#CCCCCC",
+  "#E6E6E6",
+  "#FFFFFF",
+  "#E6E6E6",
+  "#CCCCCC",
+  "#B3B3B3",
+  "#999999",
+  "#808080",
+  "#666666",
+  "#595959",
+  "#4D4D4D",
+  "#404040",
+  "#333333",
+  "#262626",
 ];
 
 function getGradientColor(hour: number): string {
@@ -41,7 +52,7 @@ function getGradientColor(hour: number): string {
 
 export default function HorizontalWorldTimezones() {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [userTimezone, setUserTimezone] = useState('');
+  const [userTimezone, setUserTimezone] = useState("");
   const timezones = useMemo(() => getHourlyTimezones(), []);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -74,17 +85,17 @@ export default function HorizontalWorldTimezones() {
   // Keyboard shortcut handler for command palette
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      if ((event.metaKey || event.ctrlKey) && event.key === "k") {
         event.preventDefault();
         setCommandOpen(true);
       }
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         setCommandOpen(false);
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   const handleMouseDown = (e: MouseEvent) => {
@@ -155,9 +166,11 @@ export default function HorizontalWorldTimezones() {
   };
 
   const getTimezoneColors = () => {
-    return timezones.map(tz => {
-      const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
-      const hourString = formatInTimeZone(adjustedTime, tz.gradientTz, 'HH');
+    return timezones.map((tz) => {
+      const adjustedTime = new Date(
+        currentTime.getTime() + timeOffset * 3600000
+      );
+      const hourString = formatInTimeZone(adjustedTime, tz.gradientTz, "HH");
       const hours = Number.parseInt(hourString, 10);
       return { tz: tz.name, color: getGradientColor(hours) };
     });
@@ -165,11 +178,11 @@ export default function HorizontalWorldTimezones() {
 
   const getTextColor = (timezone: string) => {
     const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
-    const tz = timezones.find(t => t.name === timezone);
+    const tz = timezones.find((t) => t.name === timezone);
     const gradientTz = tz?.gradientTz || timezone;
-    const hourString = formatInTimeZone(adjustedTime, gradientTz, 'HH');
+    const hourString = formatInTimeZone(adjustedTime, gradientTz, "HH");
     const hours = Number.parseInt(hourString, 10);
-    return hours >= 18 || hours < 6 ? 'text-white' : 'text-black';
+    return hours >= 18 || hours < 6 ? "text-white" : "text-black";
   };
 
   const timezoneColors = getTimezoneColors();
@@ -189,8 +202,9 @@ export default function HorizontalWorldTimezones() {
     >
       {/* Background gradient */}
       <div className="absolute inset-0 flex flex-col md:flex-row w-full h-full">
-        {timezones.map(tz => {
-          const bgColor = timezoneColors.find(tc => tc.tz === tz.name)?.color || '#000000';
+        {timezones.map((tz) => {
+          const bgColor =
+            timezoneColors.find((tc) => tc.tz === tz.name)?.color || "#000000";
           return (
             <div
               key={`gradient-${tz.name}`}
@@ -207,10 +221,12 @@ export default function HorizontalWorldTimezones() {
       {/* Content overlay */}
       <div className="absolute inset-0 flex items-stretch md:items-center justify-center pointer-events-none">
         <div className="flex flex-col md:flex-row w-full h-full">
-          {timezones.map(tz => {
+          {timezones.map((tz) => {
             const textColor = getTextColor(tz.name);
             const isHovered = hoveredTimezone === tz.name;
-            const cityAbbreviations = getCityAbbreviationsForTimezone(tz.offset);
+            const cityAbbreviations = getCityAbbreviationsForTimezone(
+              tz.offset
+            );
 
             return (
               <div
@@ -240,13 +256,17 @@ export default function HorizontalWorldTimezones() {
                     <div className="flex items-center space-x-2">
                       <p className={`${textColor} text-[11px] font-mono`}>
                         {formatInTimeZone(
-                          new Date(currentTime.getTime() + timeOffset * 3600000),
+                          new Date(
+                            currentTime.getTime() + timeOffset * 3600000
+                          ),
                           tz.name,
-                          'HH:mm'
+                          "HH:mm"
                         )}
                       </p>
                       <div className="group relative cursor-help">
-                        <p className={`${textColor} text-[11px] font-bold`}>{tz.cityAbbr}</p>
+                        <p className={`${textColor} text-[11px] font-bold`}>
+                          {tz.cityAbbr}
+                        </p>
                         <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-30">
                           <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
                             {tz.cityFull}
@@ -256,13 +276,21 @@ export default function HorizontalWorldTimezones() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <p className={`${textColor} text-[8px] opacity-75`}>{tz.utcOffset}</p>
-                      <p className={`${textColor} text-[8px] font-bold opacity-75`}>{tz.tzAbbr}</p>
+                      <p className={`${textColor} text-[8px] opacity-75`}>
+                        {tz.utcOffset}
+                      </p>
+                      <p
+                        className={`${textColor} text-[8px] font-bold opacity-75`}
+                      >
+                        {tz.tzAbbr}
+                      </p>
                       <p className={`${textColor} text-[8px] font-mono`}>
                         {formatInTimeZone(
-                          new Date(currentTime.getTime() + timeOffset * 3600000),
+                          new Date(
+                            currentTime.getTime() + timeOffset * 3600000
+                          ),
                           tz.name,
-                          'EEE'
+                          "EEE"
                         )}
                       </p>
                     </div>
@@ -274,11 +302,13 @@ export default function HorizontalWorldTimezones() {
                       {formatInTimeZone(
                         new Date(currentTime.getTime() + timeOffset * 3600000),
                         tz.name,
-                        'HH:mm'
+                        "HH:mm"
                       )}
                     </p>
                     <div className="group relative cursor-help">
-                      <p className={`${textColor} text-[10px] font-bold`}>{tz.cityAbbr}</p>
+                      <p className={`${textColor} text-[10px] font-bold`}>
+                        {tz.cityAbbr}
+                      </p>
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-30">
                         <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
                           {tz.cityFull}
@@ -290,10 +320,12 @@ export default function HorizontalWorldTimezones() {
                       {formatInTimeZone(
                         new Date(currentTime.getTime() + timeOffset * 3600000),
                         tz.name,
-                        'EEE'
+                        "EEE"
                       )}
                     </p>
-                    <p className={`${textColor} text-[7px] font-bold mt-0.5 opacity-75`}>
+                    <p
+                      className={`${textColor} text-[7px] font-bold mt-0.5 opacity-75`}
+                    >
                       {tz.tzAbbr}
                     </p>
                   </div>
@@ -309,7 +341,7 @@ export default function HorizontalWorldTimezones() {
                         exit={{ opacity: 0, y: -10, scale: 0.9 }}
                         transition={{
                           duration: 0.3,
-                          ease: 'easeOut',
+                          ease: "easeOut",
                           staggerChildren: 0.05,
                         }}
                       >
@@ -323,10 +355,12 @@ export default function HorizontalWorldTimezones() {
                               transition={{
                                 delay: index * 0.05,
                                 duration: 0.2,
-                                ease: 'easeOut',
+                                ease: "easeOut",
                               }}
                               className={`${textColor} font-medium leading-tight ${
-                                window.innerWidth >= 768 ? 'text-[6px]' : 'text-[7px]'
+                                window.innerWidth >= 768
+                                  ? "text-[6px]"
+                                  : "text-[7px]"
                               }`}
                             >
                               {city}
@@ -345,13 +379,15 @@ export default function HorizontalWorldTimezones() {
 
       {/* UTC offset labels at bottom */}
       <div className="absolute bottom-0 left-0 right-0 hidden md:flex justify-center pb-2">
-        {timezones.map(tz => (
+        {timezones.map((tz) => (
           <div
             key={`utc-${tz.name}`}
             className="flex-1 text-center"
             style={{ flexBasis: `${100 / timezones.length}%` }}
           >
-            <p className={`${getTextColor(tz.name)} text-[8px] opacity-75`}>{tz.utcOffset}</p>
+            <p className={`${getTextColor(tz.name)} text-[8px] opacity-75`}>
+              {tz.utcOffset}
+            </p>
           </div>
         ))}
       </div>
@@ -368,16 +404,6 @@ export default function HorizontalWorldTimezones() {
       >
         <Command className="w-5 h-5" />
       </motion.button>
-
-      {/* Command palette tooltip hint */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1, duration: 0.3 }}
-        className="fixed top-16 right-4 z-10 pointer-events-none bg-black/80 text-white text-xs px-2 py-1 rounded backdrop-blur-sm"
-      >
-        Press ⌘K
-      </motion.div>
 
       {/* Timezone Command Palette */}
       <TimezoneCommand open={commandOpen} onOpenChange={setCommandOpen} />

@@ -1,16 +1,12 @@
 import { type NextRequest, NextResponse } from 'next/server';
-
-import {
-  convertTimezoneMatch,
-  detectTimezoneConversions,
-} from '@/utils/message-parser';
 import { getBotInfo, sendDiscordReply } from '@/utils/discord-client';
 import { shouldProcessDiscordMessage } from '@/utils/discord-utils';
+import { convertTimezoneMatch, detectTimezoneConversions } from '@/utils/message-parser';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text();
-    
+
     // For webhook events, Discord doesn't use the same signature verification
     // In a production environment, you'd want to verify the source is Discord
     const payload = JSON.parse(body);
@@ -66,11 +62,7 @@ async function handleMessageEvent(event: {
       const converted = convertTimezoneMatch(match);
 
       if (converted.formattedResponse) {
-        await sendDiscordReply(
-          event.channel_id,
-          `🌍 ${converted.formattedResponse}`,
-          event.id
-        );
+        await sendDiscordReply(event.channel_id, `🌍 ${converted.formattedResponse}`, event.id);
 
         console.log(`Sent Discord timezone conversion: ${converted.formattedResponse}`);
       }

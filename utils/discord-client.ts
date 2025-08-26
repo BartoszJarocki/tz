@@ -78,7 +78,7 @@ export async function registerSlashCommand() {
 
   try {
     const rest = getDiscordREST();
-    
+
     console.log('Started refreshing application (/) commands.');
 
     await rest.put(Routes.applicationCommands(DISCORD_APPLICATION_ID), {
@@ -96,7 +96,7 @@ export async function getBotInfo() {
   try {
     const client = getDiscordClient();
     await client.user?.fetch();
-    
+
     return {
       userId: client.user?.id,
       username: client.user?.username,

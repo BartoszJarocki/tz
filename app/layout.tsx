@@ -4,11 +4,7 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -34,7 +30,16 @@ export const metadata = {
   description:
     'interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles. automatically convert timezone mentions in slack messages!',
   generator: 'v0.dev',
-  keywords: ['timezone', 'time zone', 'converter', 'slack', 'bot', 'visualization', 'gradient', 'world clock'],
+  keywords: [
+    'timezone',
+    'time zone',
+    'converter',
+    'slack',
+    'bot',
+    'visualization',
+    'gradient',
+    'world clock',
+  ],
   authors: [{ name: 'bartosz jarocki' }],
   creator: 'bartosz jarocki',
   openGraph: {
@@ -57,8 +62,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'tzc - time zone converter',
-    description:
-      'interactive visualization of world time zones with slack integration',
+    description: 'interactive visualization of world time zones with slack integration',
     images: ['/assets/screenshot.png'],
   },
   robots: {
