@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { getSlackClient } from '@/utils/slack-client';
 
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     console.log('🤖 Auto-joining channels...');
     const client = getSlackClient();
@@ -28,12 +28,13 @@ export async function POST(request: NextRequest) {
             channel: channel.id,
           });
           joinResults.push({ channel: channel.name, status: 'joined' });
-        } catch (error: any) {
-          console.log(`❌ Failed to join #${channel.name}:`, error.message);
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          console.log(`❌ Failed to join #${channel.name}:`, errorMessage);
           joinResults.push({
             channel: channel.name,
             status: 'failed',
-            error: error.message,
+            error: errorMessage,
           });
         }
       } else {

@@ -1,9 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import {
-  createErrorResponse,
-  createTimezoneResponse,
-  verifySlackSignature,
-} from '@/utils/slack-utils';
+import { createErrorResponse, verifySlackSignature } from '@/utils/slack-utils';
 import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
@@ -104,7 +100,7 @@ async function handleShortcut(payload: { callback_id: string }) {
 
 async function handleViewSubmission(payload: { view: { state: { values: unknown } } }) {
   // Handle modal submissions
-  const values = payload.view.state.values;
+  const _values = payload.view.state.values;
 
   // Extract form data and process timezone conversion
   // This would be used if we implement a modal interface

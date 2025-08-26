@@ -170,8 +170,8 @@ function parseTimeString(timeStr: string): Date {
   // Manual parsing for common formats, handle spaces before am/pm
   const timeMatch = timeStr.match(/(\d{1,2})(?::(\d{2}))?\s*(?:(am|pm))?/i);
   if (timeMatch) {
-    const hours = Number.parseInt(timeMatch[1]);
-    const minutes = Number.parseInt(timeMatch[2] || '0');
+    const hours = Number.parseInt(timeMatch[1], 10);
+    const minutes = Number.parseInt(timeMatch[2] || '0', 10);
     const period = timeMatch[3]?.toLowerCase();
 
     let hour24 = hours;

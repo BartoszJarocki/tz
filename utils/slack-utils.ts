@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 import { formatInTimeZone } from 'date-fns-tz';
 
 export interface SlackCommandPayload {
@@ -28,8 +28,8 @@ export function verifySlackSignature(signature: string, timestamp: string, body:
     throw new Error('SLACK_SIGNING_SECRET is not set');
   }
 
-  const time = Math.floor(new Date().getTime() / 1000);
-  if (Math.abs(time - Number.parseInt(timestamp)) > 300) {
+  const time = Math.floor(Date.now() / 1000);
+  if (Math.abs(time - Number.parseInt(timestamp, 10)) > 300) {
     return false;
   }
 

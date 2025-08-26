@@ -1,4 +1,4 @@
-import { formatInTimeZone, fromZonedTime, getTimezoneOffset, toZonedTime } from 'date-fns-tz';
+import { formatInTimeZone, fromZonedTime, getTimezoneOffset } from 'date-fns-tz';
 
 /**
  * Timezone information interface
@@ -294,7 +294,7 @@ export function convertTimeToTimezones(
 
     try {
       let timeToConvert: Date;
-      
+
       // Handle different types of source time scenarios
       if (sourceTimezone === '__absolute__') {
         // For "now" commands - sourceTime is already an absolute point in time
@@ -303,7 +303,7 @@ export function convertTimeToTimezones(
         // For timezone-specific times like "3pm EST" - convert from source timezone to UTC
         timeToConvert = fromZonedTime(sourceTime, sourceTimezone);
       }
-      
+
       // Format the time in the target timezone
       const timeString = formatInTimeZone(timeToConvert, targetTimezone, 'h:mm a');
 
@@ -315,7 +315,7 @@ export function convertTimeToTimezones(
       } else {
         sourceDate = formatInTimeZone(timeToConvert, sourceTimezone, 'yyyy-MM-dd');
       }
-      
+
       const targetDate = formatInTimeZone(timeToConvert, targetTimezone, 'yyyy-MM-dd');
 
       const sourceDateObj = new Date(sourceDate);

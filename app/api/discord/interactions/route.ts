@@ -5,7 +5,6 @@ import {
   createDiscordEmbedResponse,
   createDiscordErrorResponse,
   createDiscordHelpResponse,
-  createDiscordResponse,
   type DiscordInteractionPayload,
   verifyDiscordSignature,
 } from '@/utils/discord-utils';
