@@ -158,14 +158,21 @@ export function TimezoneCommand({ open, onOpenChange }: TimezoneCommandProps) {
           {parsedCommand && conversions.length > 0 && (
             <CommandGroup heading="Conversions">
               {conversions.map((conversion, index) => {
-                const sourceTime = formatInTimeZone(
-                  parsedCommand.sourceTime,
-                  parsedCommand.sourceTimezone,
-                  'h:mm a'
-                );
-                const sourceInfo =
-                  parsedCommand.sourceTimezone.split('/').pop()?.replace('_', ' ') ||
-                  parsedCommand.sourceTimezone;
+                const sourceTime = parsedCommand.sourceTimezone === '__absolute__'
+                  ? parsedCommand.sourceTime.toLocaleTimeString('en-US', { 
+                      hour: 'numeric', 
+                      minute: '2-digit', 
+                      hour12: true 
+                    })
+                  : formatInTimeZone(
+                      parsedCommand.sourceTime,
+                      parsedCommand.sourceTimezone,
+                      'h:mm a'
+                    );
+                const sourceInfo = parsedCommand.sourceTimezone === '__absolute__'
+                  ? 'Local'
+                  : parsedCommand.sourceTimezone.split('/').pop()?.replace('_', ' ') ||
+                    parsedCommand.sourceTimezone;
 
                 return (
                   <CommandItem

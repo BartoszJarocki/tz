@@ -300,42 +300,42 @@ export default function HorizontalWorldTimezones() {
                 </div>
 
                 <div className="flex-1">
-                  {/* City abbreviations overlay - positioned above main content */}
-                  <AnimatePresence>
-                    {isHovered && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -10, scale: 0.9 }}
-                        transition={{
-                          duration: 0.3,
-                          ease: 'easeOut',
-                          staggerChildren: 0.05,
-                        }}
-                      >
-                        <div className="flex flex-col items-center space-y-1">
-                          {cityAbbreviations.map((city, index) => (
-                            <motion.div
-                              key={city}
-                              initial={{ opacity: 0, y: 5 }}
-                              animate={{ opacity: 0.8, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              transition={{
-                                delay: index * 0.05,
-                                duration: 0.2,
-                                ease: 'easeOut',
-                              }}
-                              className={`${textColor} font-medium leading-tight ${
-                                window.innerWidth >= 768 ? 'text-[6px]' : 'text-[7px]'
-                              }`}
-                            >
-                              {city}
-                            </motion.div>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  {/* City abbreviations overlay - positioned above main content - desktop only */}
+                  <div className="hidden md:block">
+                    <AnimatePresence>
+                      {isHovered && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.9 }}
+                          transition={{
+                            duration: 0.3,
+                            ease: 'easeOut',
+                            staggerChildren: 0.05,
+                          }}
+                        >
+                          <div className="flex flex-col items-center space-y-1">
+                            {cityAbbreviations.map((city, index) => (
+                              <motion.div
+                                key={city}
+                                initial={{ opacity: 0, y: 5 }}
+                                animate={{ opacity: 0.8, y: 0 }}
+                                exit={{ opacity: 0, y: -5 }}
+                                transition={{
+                                  delay: index * 0.05,
+                                  duration: 0.2,
+                                  ease: 'easeOut',
+                                }}
+                                className={`${textColor} font-medium leading-tight text-[6px]`}
+                              >
+                                {city}
+                              </motion.div>
+                            ))}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             );

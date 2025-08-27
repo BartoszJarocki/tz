@@ -118,11 +118,23 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
     }
 
     case 2: {
-      // "now in London" or "now in London, Paris, Tokyo"
+      // "now in London" or "now in London, Paris, Tokyo" or "now in *"
       sourceTime = new Date();
       sourceTimezone = '__absolute__'; // Special token for absolute time
       const cities = matches[2].split(/[,\s]+/).filter(city => city.length > 0);
       targetTimezones = cities.map(city => resolveTimezone(city));
+      
+      // Handle wildcard expansion - show all major timezones
+      if (targetTimezones.includes('__wildcard__')) {
+        const hourlyTz = getHourlyTimezones();
+        // Show a selection of major cities instead of all 25 timezones
+        targetTimezones = [
+          'America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver',
+          'Europe/London', 'Europe/Paris', 'Europe/Moscow',
+          'Asia/Tokyo', 'Asia/Singapore', 'Asia/Dubai',
+          'Australia/Sydney', 'Pacific/Auckland'
+        ];
+      }
       break;
     }
 
@@ -137,7 +149,7 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
       return null;
   }
 
-  // Filter out invalid timezones
+  // Filter out invalid timezones (but keep __wildcard__ for processing)
   targetTimezones = targetTimezones.filter(tz => tz !== 'Unknown');
 
   if (targetTimezones.length === 0) {
@@ -191,6 +203,11 @@ function parseTimeString(timeStr: string): Date {
 
 function resolveTimezone(input: string): string {
   const normalized = input.trim().toUpperCase();
+
+  // Handle wildcard - return special marker for wildcard expansion
+  if (normalized === '*') {
+    return '__wildcard__';
+  }
 
   // Check direct aliases
   if (TIMEZONE_ALIASES[normalized]) {
