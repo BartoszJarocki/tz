@@ -56,8 +56,6 @@
     "cmdk": "^1.1.1",
     "date-fns": "4.1.0",
     "date-fns-tz": "latest",
-    "discord-interactions": "^4.3.0",
-    "discord.js": "^14.22.1",
     "embla-carousel-react": "latest",
     "framer-motion": "latest",
     "fs": "latest",
@@ -76,7 +74,6 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "latest",
-    "zlib-sync": "^0.1.10",
     "zod": "^3.24.1"
   },
   "devDependencies": {

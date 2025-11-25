@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { getBotInfo, getSlackClient } from '@/utils/slack-client';
+import { getBotInfo, getSlackClient } from '@/utils/slack';
 
 export async function GET() {
   try {
@@ -32,7 +32,7 @@ export async function GET() {
     console.log('🔐 Auth test:', authTest);
 
     // Test 4: List channels bot is in
-    let channels = [];
+    let channels: Array<{ id?: string; name?: string; is_member?: boolean }> = [];
     try {
       const channelsResponse = await client.conversations.list({
         types: 'public_channel,private_channel',

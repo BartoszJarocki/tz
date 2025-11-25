@@ -25,7 +25,14 @@ interface TimezoneInfo {
  * @returns {TimezoneInfo[]} Array of timezone information
  */
 export function getHourlyTimezones(): TimezoneInfo[] {
-  const hourlyTimezones = [
+  return getAllTimezoneData().filter((tz) => Number.isInteger(tz.offset));
+}
+
+/**
+ * Gets all timezones including half-hour offsets
+ */
+export function getAllTimezoneData(): TimezoneInfo[] {
+  const allTimezones = [
     {
       offset: -12,
       cityAbbr: 'BAK',
@@ -171,6 +178,15 @@ export function getHourlyTimezones(): TimezoneInfo[] {
       gradientTz: 'Etc/GMT-3',
     },
     {
+      offset: 3.5,
+      cityAbbr: 'THR',
+      cityFull: 'Tehran',
+      utcOffset: '+3:30',
+      tzAbbr: 'IRST',
+      name: 'Asia/Tehran',
+      gradientTz: 'Etc/GMT-3',
+    },
+    {
       offset: 4,
       cityAbbr: 'DUB',
       cityFull: 'Dubai',
@@ -187,6 +203,24 @@ export function getHourlyTimezones(): TimezoneInfo[] {
       tzAbbr: 'PKT',
       name: 'Asia/Karachi',
       gradientTz: 'Etc/GMT-5',
+    },
+    {
+      offset: 5.5,
+      cityAbbr: 'DEL',
+      cityFull: 'Delhi',
+      utcOffset: '+5:30',
+      tzAbbr: 'IST',
+      name: 'Asia/Kolkata',
+      gradientTz: 'Etc/GMT-5',
+    },
+    {
+      offset: 5.75,
+      cityAbbr: 'KTM',
+      cityFull: 'Kathmandu',
+      utcOffset: '+5:45',
+      tzAbbr: 'NPT',
+      name: 'Asia/Kathmandu',
+      gradientTz: 'Etc/GMT-6',
     },
     {
       offset: 6,
@@ -225,6 +259,15 @@ export function getHourlyTimezones(): TimezoneInfo[] {
       gradientTz: 'Etc/GMT-9',
     },
     {
+      offset: 9.5,
+      cityAbbr: 'ADL',
+      cityFull: 'Adelaide',
+      utcOffset: '+9:30',
+      tzAbbr: 'ACST',
+      name: 'Australia/Adelaide',
+      gradientTz: 'Etc/GMT-9',
+    },
+    {
       offset: 10,
       cityAbbr: 'SYD',
       cityFull: 'Sydney',
@@ -253,7 +296,7 @@ export function getHourlyTimezones(): TimezoneInfo[] {
     },
   ];
 
-  return hourlyTimezones;
+  return allTimezones;
 }
 
 export function findClosestTimezone(timezones: TimezoneInfo[], userOffset: number): string {
@@ -283,9 +326,10 @@ export interface TimezoneConversion {
 export function convertTimeToTimezones(
   sourceTime: Date,
   sourceTimezone: string,
-  targetTimezones: string[]
+  targetTimezones: string[],
+  format24h = false
 ): TimezoneConversion[] {
-  const timezones = getHourlyTimezones();
+  const timezones = getAllTimezoneData();
   const conversions: TimezoneConversion[] = [];
 
   for (const targetTimezone of targetTimezones) {
@@ -305,7 +349,8 @@ export function convertTimeToTimezones(
       }
 
       // Format the time in the target timezone
-      const timeString = formatInTimeZone(timeToConvert, targetTimezone, 'h:mm a');
+      const timeFormat = format24h ? 'HH:mm' : 'h:mm a';
+      const timeString = formatInTimeZone(timeToConvert, targetTimezone, timeFormat);
 
       // Calculate day difference by comparing the date parts in each timezone
       let sourceDate: string;
@@ -357,7 +402,7 @@ export function getTimezoneInfo(timezone: string): TimezoneInfo | null {
 }
 
 export function searchTimezonesByCity(cityQuery: string): TimezoneInfo[] {
-  const timezones = getHourlyTimezones();
+  const timezones = getAllTimezoneData();
   const query = cityQuery.toLowerCase().trim();
 
   return timezones
@@ -376,4 +421,59 @@ export function searchTimezonesByCity(cityQuery: string): TimezoneInfo[] {
 
       return a.cityFull.localeCompare(b.cityFull);
     });
+}
+
+/**
+ * Gets all timezones formatted for the list command
+ */
+export function getAllTimezones(): Array<{ city: string; offset: string; timezone: string }> {
+  return getAllTimezoneData()
+    .sort((a, b) => a.offset - b.offset)
+    .map((tz) => ({
+      city: tz.cityFull,
+      offset: `UTC${tz.utcOffset.startsWith('-') ? '' : '+'}${tz.utcOffset}`,
+      timezone: tz.name,
+    }));
+}
+
+/**
+ * Search timezones by query (city, country, abbreviation, offset)
+ */
+export function searchTimezones(
+  query: string
+): Array<{ city: string; offset: string; timezone: string }> {
+  const timezones = getAllTimezoneData();
+  const q = query.toLowerCase().trim();
+
+  // Search by city name, abbreviation, timezone name, or tzAbbr
+  const matches = timezones.filter(
+    (tz) =>
+      tz.cityFull.toLowerCase().includes(q) ||
+      tz.cityAbbr.toLowerCase().includes(q) ||
+      tz.name.toLowerCase().includes(q) ||
+      tz.tzAbbr.toLowerCase().includes(q) ||
+      tz.utcOffset.includes(q)
+  );
+
+  return matches
+    .sort((a, b) => {
+      // Exact matches first
+      const aExact =
+        a.cityFull.toLowerCase() === q ||
+        a.cityAbbr.toLowerCase() === q ||
+        a.tzAbbr.toLowerCase() === q;
+      const bExact =
+        b.cityFull.toLowerCase() === q ||
+        b.cityAbbr.toLowerCase() === q ||
+        b.tzAbbr.toLowerCase() === q;
+
+      if (aExact && !bExact) return -1;
+      if (!aExact && bExact) return 1;
+      return a.offset - b.offset;
+    })
+    .map((tz) => ({
+      city: tz.cityFull,
+      offset: `UTC${tz.utcOffset.startsWith('-') ? '' : '+'}${tz.utcOffset}`,
+      timezone: tz.name,
+    }));
 }

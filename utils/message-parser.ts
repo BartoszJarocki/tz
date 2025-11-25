@@ -30,21 +30,35 @@ export function detectTimezoneConversions(text: string): TimezoneConversionMatch
   // Decode HTML entities that Slack encodes
   const decodedText = decodeHtmlEntities(text);
 
-  // Pattern to match: "time TZ -> TZ" or "time TZ to TZ"
-  const pattern = /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|to)\s*([A-Z]{2,4})/gi;
+  // Multiple patterns for flexibility
+  const patterns = [
+    // "3PM EST -> PST" or "3PM EST to PST" (original)
+    /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s*([A-Z]{2,4})\s*(?:->|=>|=|to)\s*([A-Z]{2,4})/gi,
+    // "3PM in EST -> PST" or "3PM in EST to PST"
+    /(\d{1,2}(?::\d{2})?\s*(?:am|pm)?)\s+in\s+([A-Z]{2,4})\s*(?:->|=>|=|to)\s*([A-Z]{2,4})/gi,
+  ];
 
-  for (const match of decodedText.matchAll(pattern)) {
-    const fullMatch = match[0];
-    const sourceTime = match[1];
-    const sourceTimezone = match[2];
-    const targetTimezone = match[3];
+  const seen = new Set<string>();
 
-    matches.push({
-      originalText: fullMatch,
-      sourceTime,
-      sourceTimezone,
-      targetTimezone,
-    });
+  for (const pattern of patterns) {
+    for (const match of decodedText.matchAll(pattern)) {
+      const fullMatch = match[0];
+      const sourceTime = match[1];
+      const sourceTimezone = match[2];
+      const targetTimezone = match[3];
+
+      // Deduplicate matches
+      const key = `${sourceTime}|${sourceTimezone}|${targetTimezone}`.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      matches.push({
+        originalText: fullMatch,
+        sourceTime,
+        sourceTimezone,
+        targetTimezone,
+      });
+    }
   }
 
   return matches;
@@ -110,8 +124,8 @@ function formatTimeForDisplay(date: Date, timezone: string): string {
 }
 
 function getTimezoneAbbreviation(timezone: string): string {
-  // Common timezone abbreviations
-  const abbreviations: { [key: string]: string } = {
+  // Common timezone abbreviations including half-hour zones
+  const abbreviations: Record<string, string> = {
     'America/New_York': 'EST',
     'America/Los_Angeles': 'PST',
     'America/Chicago': 'CST',
@@ -122,6 +136,10 @@ function getTimezoneAbbreviation(timezone: string): string {
     'Asia/Tokyo': 'JST',
     'Asia/Shanghai': 'CST',
     'Australia/Sydney': 'AEST',
+    'Asia/Kolkata': 'IST',
+    'Asia/Kathmandu': 'NPT',
+    'Asia/Tehran': 'IRST',
+    'Australia/Adelaide': 'ACST',
     UTC: 'UTC',
   };
 

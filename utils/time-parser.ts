@@ -1,6 +1,6 @@
 import * as chrono from 'chrono-node';
 import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
-import { getHourlyTimezones } from '@/utils/timezone-utils';
+import { getAllTimezoneData } from '@/utils/timezone-utils';
 
 export interface ParsedTimeCommand {
   sourceTime: Date;
@@ -15,7 +15,8 @@ export interface TimezoneMatch {
   confidence: number;
 }
 
-const TIMEZONE_ALIASES = {
+const TIMEZONE_ALIASES: Record<string, string> = {
+  // US timezones
   EST: 'America/New_York',
   EDT: 'America/New_York',
   CST: 'America/Chicago',
@@ -24,17 +25,25 @@ const TIMEZONE_ALIASES = {
   MDT: 'America/Denver',
   PST: 'America/Los_Angeles',
   PDT: 'America/Los_Angeles',
+  // Europe
   GMT: 'Europe/London',
   UTC: 'UTC',
   CET: 'Europe/Paris',
   CEST: 'Europe/Paris',
+  // Asia
   JST: 'Asia/Tokyo',
   SGT: 'Asia/Singapore',
+  // Half-hour timezones
+  IST: 'Asia/Kolkata',
+  NPT: 'Asia/Kathmandu',
+  IRST: 'Asia/Tehran',
+  ACST: 'Australia/Adelaide',
+  // Australia
   AEST: 'Australia/Sydney',
   AEDT: 'Australia/Sydney',
 };
 
-const CITY_ALIASES = {
+const CITY_ALIASES: Record<string, string> = {
   NYC: 'America/New_York',
   LA: 'America/Los_Angeles',
   CHI: 'America/Chicago',
@@ -48,6 +57,12 @@ const CITY_ALIASES = {
   DUB: 'Asia/Dubai',
   MOS: 'Europe/Moscow',
   CAI: 'Africa/Cairo',
+  // Half-hour timezone cities
+  DEL: 'Asia/Kolkata',
+  BOM: 'Asia/Kolkata',
+  KTM: 'Asia/Kathmandu',
+  THR: 'Asia/Tehran',
+  ADL: 'Australia/Adelaide',
 };
 
 export function parseTimeCommand(text: string): ParsedTimeCommand | null {
@@ -124,14 +139,12 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
       const cities = matches[2].split(/[,\s]+/).filter(city => city.length > 0);
       targetTimezones = cities.map(city => resolveTimezone(city));
       
-      // Handle wildcard expansion - show all major timezones
+      // Handle wildcard expansion - show major timezones including half-hour
       if (targetTimezones.includes('__wildcard__')) {
-        const hourlyTz = getHourlyTimezones();
-        // Show a selection of major cities instead of all 25 timezones
         targetTimezones = [
           'America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver',
           'Europe/London', 'Europe/Paris', 'Europe/Moscow',
-          'Asia/Tokyo', 'Asia/Singapore', 'Asia/Dubai',
+          'Asia/Kolkata', 'Asia/Tokyo', 'Asia/Singapore', 'Asia/Dubai',
           'Australia/Sydney', 'Pacific/Auckland'
         ];
       }
@@ -219,7 +232,7 @@ function resolveTimezone(input: string): string {
   }
 
   // Check if it's a full timezone name
-  const timezones = getHourlyTimezones();
+  const timezones = getAllTimezoneData();
   const directMatch = timezones.find(tz => tz.name.toLowerCase() === input.toLowerCase());
   if (directMatch) {
     return directMatch.name;

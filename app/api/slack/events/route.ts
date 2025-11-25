@@ -4,8 +4,7 @@ import {
   detectTimezoneConversions,
   shouldProcessMessage,
 } from '@/utils/message-parser';
-import { getBotInfo, getSlackClient, sendSimpleReply } from '@/utils/slack-client';
-import { verifySlackSignature } from '@/utils/slack-utils';
+import { getBotInfo, getSlackClient, sendSimpleReply, verifySlackSignature } from '@/utils/slack';
 
 export async function POST(request: NextRequest) {
   try {

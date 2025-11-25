@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { getSlackClient } from '@/utils/slack-client';
+import { getSlackClient } from '@/utils/slack';
 
 export async function POST(_request: NextRequest) {
   try {

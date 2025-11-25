@@ -2,12 +2,14 @@ import { type NextRequest, NextResponse } from 'next/server';
 import {
   createErrorResponse,
   createHelpResponse,
+  createListResponse,
+  createSearchResponse,
   createTimezoneResponse,
   type SlackCommandPayload,
   verifySlackSignature,
-} from '@/utils/slack-utils';
+} from '@/utils/slack';
 import { parseTimeCommand } from '@/utils/time-parser';
-import { convertTimeToTimezones } from '@/utils/timezone-utils';
+import { convertTimeToTimezones, getAllTimezones, searchTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
   try {
@@ -50,18 +52,28 @@ export async function POST(request: NextRequest) {
       `Slash command received: ${payload.command} ${payload.text} from ${payload.user_name}`
     );
 
+    const text = payload.text.trim().toLowerCase();
+
     // Handle help request
-    if (
-      !payload.text ||
-      payload.text.trim() === '' ||
-      payload.text.trim() === 'help' ||
-      payload.text.trim() === '?'
-    ) {
+    if (!text || text === 'help' || text === '?') {
       return NextResponse.json(createHelpResponse());
     }
 
+    // Handle list command
+    if (text === 'list') {
+      const timezones = getAllTimezones();
+      return NextResponse.json(createListResponse(timezones));
+    }
+
+    // Handle search command
+    if (text.startsWith('search ')) {
+      const query = payload.text.trim().slice(7).trim();
+      const results = searchTimezones(query);
+      return NextResponse.json(createSearchResponse(query, results));
+    }
+
     // Parse the command
-    const parsedCommand = parseTimeCommand(payload.text);
+    const parsedCommand = parseTimeCommand(payload.text)
     if (!parsedCommand) {
       return NextResponse.json(
         createErrorResponse(

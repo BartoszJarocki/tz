@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { createErrorResponse, verifySlackSignature } from '@/utils/slack-utils';
+import { createErrorResponse, verifySlackSignature } from '@/utils/slack';
 import { convertTimeToTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
