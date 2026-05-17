@@ -1,132 +1,43 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { logger } from '@/utils/logger';
 import {
   createErrorResponse,
-  createHelpResponse,
-  createListResponse,
-  createSearchResponse,
-  createTimezoneResponse,
-  type SlackCommandPayload,
+  createSlackCommandResponse,
+  parseSlackCommandPayload,
   verifySlackSignature,
 } from '@/utils/slack';
-import { parseTimeCommand } from '@/utils/time-parser';
-import { convertTimeToTimezones, getAllTimezones, searchTimezones } from '@/utils/timezone-utils';
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('⚡ Slack slash command received');
     const body = await request.text();
     const timestamp = request.headers.get('x-slack-request-timestamp') || '';
     const signature = request.headers.get('x-slack-signature') || '';
 
-    console.log('📦 Command request details:', {
+    logger.info('Slack slash command received', {
       hasBody: !!body,
       hasTimestamp: !!timestamp,
       hasSignature: !!signature,
       bodyLength: body.length,
     });
 
-    // Verify Slack signature
     if (!verifySlackSignature(signature, timestamp, body)) {
-      console.error('❌ Invalid Slack slash command signature');
+      logger.warn('Invalid Slack slash command signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
     }
-    console.log('✅ Slack slash command signature verified');
 
-    // Parse the form data
-    const params = new URLSearchParams(body);
-    const payload: SlackCommandPayload = {
-      token: params.get('token') || '',
-      team_id: params.get('team_id') || '',
-      team_domain: params.get('team_domain') || '',
-      channel_id: params.get('channel_id') || '',
-      channel_name: params.get('channel_name') || '',
-      user_id: params.get('user_id') || '',
-      user_name: params.get('user_name') || '',
-      command: params.get('command') || '',
-      text: params.get('text') || '',
-      response_url: params.get('response_url') || '',
-      trigger_id: params.get('trigger_id') || '',
-    };
+    const payload = parseSlackCommandPayload(body);
 
-    console.log(
-      `Slash command received: ${payload.command} ${payload.text} from ${payload.user_name}`
-    );
+    logger.info('Slack slash command parsed', {
+      command: payload.command,
+      hasText: payload.text.length > 0,
+      user: payload.user_name,
+    });
 
-    const text = payload.text.trim().toLowerCase();
-
-    // Handle help request
-    if (!text || text === 'help' || text === '?') {
-      return NextResponse.json(createHelpResponse());
-    }
-
-    // Handle list command
-    if (text === 'list') {
-      const timezones = getAllTimezones();
-      return NextResponse.json(createListResponse(timezones));
-    }
-
-    // Handle search command
-    if (text.startsWith('search ')) {
-      const query = payload.text.trim().slice(7).trim();
-      const results = searchTimezones(query);
-      return NextResponse.json(createSearchResponse(query, results));
-    }
-
-    // Parse the command
-    const parsedCommand = parseTimeCommand(payload.text)
-    if (!parsedCommand) {
-      return NextResponse.json(
-        createErrorResponse(
-          'Could not understand the time conversion request. Type `/tz help` for usage examples.'
-        )
-      );
-    }
-
-    // Convert the time
-    try {
-      const conversions = convertTimeToTimezones(
-        parsedCommand.sourceTime,
-        parsedCommand.sourceTimezone,
-        parsedCommand.targetTimezones
-      );
-
-      if (conversions.length === 0) {
-        return NextResponse.json(
-          createErrorResponse(
-            'No valid timezones found for conversion. Please check your timezone names.'
-          )
-        );
-      }
-
-      // Create response
-      const sourceTimeString = parsedCommand.isNow
-        ? 'Current time'
-        : parsedCommand.sourceTime.toLocaleTimeString('en-US', {
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-          });
-
-      const sourceTimezoneInfo =
-        parsedCommand.sourceTimezone === 'UTC' ? 'UTC' : parsedCommand.sourceTimezone;
-
-      const response = createTimezoneResponse(
-        conversions,
-        parsedCommand.isNow ? undefined : sourceTimeString,
-        parsedCommand.isNow ? undefined : sourceTimezoneInfo
-      );
-
-      return NextResponse.json(response);
-    } catch (conversionError) {
-      console.error('Error converting timezone:', conversionError);
-      return NextResponse.json(
-        createErrorResponse(
-          'Error performing timezone conversion. Please check your input and try again.'
-        )
-      );
-    }
+    return NextResponse.json(createSlackCommandResponse(payload));
   } catch (error) {
-    console.error('Error handling Slack command:', error);
+    logger.error('Error handling Slack command', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return NextResponse.json(
       createErrorResponse('An internal error occurred. Please try again later.'),
       { status: 500 }

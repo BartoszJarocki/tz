@@ -1,5 +1,5 @@
-import { parseTimeCommand } from '@/utils/time-parser';
-import { convertTimeToTimezones } from '@/utils/timezone-utils';
+import { logger } from '@/utils/logger';
+import { convertDetectedTimezoneConversion } from '@/utils/timezone-conversion';
 
 function decodeHtmlEntities(text: string): string {
   // Simple HTML entity decoder for common entities that Slack uses
@@ -66,84 +66,22 @@ export function detectTimezoneConversions(text: string): TimezoneConversionMatch
 
 export function convertTimezoneMatch(match: TimezoneConversionMatch): TimezoneConversionMatch {
   try {
-    // Use existing parser to handle the conversion
-    const commandText = `${match.sourceTime} ${match.sourceTimezone} to ${match.targetTimezone}`;
-    const parsed = parseTimeCommand(commandText);
-
-    if (!parsed) {
+    const result = convertDetectedTimezoneConversion(match);
+    if (!result) {
       return { ...match, formattedResponse: 'Could not parse time conversion' };
     }
 
-    const conversions = convertTimeToTimezones(
-      parsed.sourceTime,
-      parsed.sourceTimezone,
-      parsed.targetTimezones
-    );
-
-    if (conversions.length === 0) {
-      return { ...match, formattedResponse: 'Could not convert timezone' };
-    }
-
-    const conversion = conversions[0];
-
-    // Format: "3:00PM EST (21:00 CEST)"
-    const sourceFormatted = formatTimeForDisplay(parsed.sourceTime, parsed.sourceTimezone);
-    const targetFormatted = conversion.time;
-
-    const formattedResponse = `${targetFormatted} (${sourceFormatted})`;
-
     return {
       ...match,
-      convertedTime: conversion.time,
-      formattedResponse,
+      convertedTime: result.conversion.time,
+      formattedResponse: result.formattedResponse,
     };
   } catch (error) {
-    console.error('Error converting timezone match:', error);
+    logger.warn('Error converting timezone match', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
     return { ...match, formattedResponse: 'Error converting timezone' };
   }
-}
-
-function formatTimeForDisplay(date: Date, timezone: string): string {
-  try {
-    // Format time in 12-hour format with timezone abbreviation
-    const timeStr = date.toLocaleString('en-US', {
-      timeZone: timezone,
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-    });
-
-    // Get timezone abbreviation
-    const tzAbbr = getTimezoneAbbreviation(timezone);
-
-    return `${timeStr} ${tzAbbr}`;
-  } catch (error) {
-    console.error('Error formatting time:', error);
-    return 'Invalid time';
-  }
-}
-
-function getTimezoneAbbreviation(timezone: string): string {
-  // Common timezone abbreviations including half-hour zones
-  const abbreviations: Record<string, string> = {
-    'America/New_York': 'EST',
-    'America/Los_Angeles': 'PST',
-    'America/Chicago': 'CST',
-    'America/Denver': 'MST',
-    'Europe/London': 'GMT',
-    'Europe/Paris': 'CET',
-    'Europe/Berlin': 'CET',
-    'Asia/Tokyo': 'JST',
-    'Asia/Shanghai': 'CST',
-    'Australia/Sydney': 'AEST',
-    'Asia/Kolkata': 'IST',
-    'Asia/Kathmandu': 'NPT',
-    'Asia/Tehran': 'IRST',
-    'Australia/Adelaide': 'ACST',
-    UTC: 'UTC',
-  };
-
-  return abbreviations[timezone] || timezone.split('/').pop() || 'TZ';
 }
 
 export function shouldProcessMessage(text: string, userId: string, botUserId?: string): boolean {

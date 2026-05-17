@@ -1,8 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { formatInTimeZone } from 'date-fns-tz';
 import { ImageResponse } from 'next/og';
-import { getHourlyTimezones } from '@/utils/timezone-utils';
+import {
+  createWorldTimeVisualizationModel,
+  getWorldTimezones,
+} from '@/utils/world-time-visualization';
 
 // Image metadata
 export const alt = 'TZC - Time Zone Converter';
@@ -13,51 +15,17 @@ export const size = {
 
 export const contentType = 'image/png';
 
-// Hour colors for timezone bars (same as main page)
-const HOUR_COLORS = [
-  '#1A1A1A',
-  '#262626',
-  '#333333',
-  '#404040',
-  '#4D4D4D',
-  '#595959',
-  '#666666',
-  '#808080',
-  '#999999',
-  '#B3B3B3',
-  '#CCCCCC',
-  '#E6E6E6',
-  '#FFFFFF',
-  '#E6E6E6',
-  '#CCCCCC',
-  '#B3B3B3',
-  '#999999',
-  '#808080',
-  '#666666',
-  '#595959',
-  '#4D4D4D',
-  '#404040',
-  '#333333',
-  '#262626',
-];
-
-function getGradientColor(hour: number): string {
-  return HOUR_COLORS[hour];
-}
-
 // Image generation
 export default async function Image() {
   // Font loading, process.cwd() is Next.js project directory
   const interSemiBold = await readFile(join(process.cwd(), 'assets/Inter-SemiBold.ttf'));
 
-  // Generate timezone bars
   const currentTime = new Date();
-  const timezones = getHourlyTimezones();
-
-  const timezoneColors = timezones.map(tz => {
-    const hourString = formatInTimeZone(currentTime, tz.gradientTz, 'HH');
-    const hours = parseInt(hourString, 10);
-    return { tz: tz.name, color: getGradientColor(hours) };
+  const timezoneDisplays = createWorldTimeVisualizationModel({
+    currentTime,
+    timeOffset: 0,
+    userTimezone: '',
+    timezones: getWorldTimezones(),
   });
 
   return new ImageResponse(
@@ -82,19 +50,16 @@ export default async function Image() {
           flexDirection: 'row',
         }}
       >
-        {timezones.map((tz, _index) => {
-          const bgColor = timezoneColors.find(tc => tc.tz === tz.name)?.color || '#000000';
-          return (
-            <div
-              key={`gradient-${tz.name}`}
-              style={{
-                flex: 1,
-                background: bgColor,
-                width: `${100 / timezones.length}%`,
-              }}
-            />
-          );
-        })}
+        {timezoneDisplays.map(display => (
+          <div
+            key={`gradient-${display.timezone.name}`}
+            style={{
+              flex: 1,
+              background: display.backgroundColor,
+              width: display.flexBasis,
+            }}
+          />
+        ))}
       </div>
 
       {/* Foreground text */}

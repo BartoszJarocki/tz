@@ -14,23 +14,27 @@ This is a timezone converter application with a Slack bot integration. It featur
 ```typescript
 // ✅ Correct
 import { parseTimeCommand } from '@/utils/time-parser';
-import { convertTimeToTimezones } from '@/utils/timezone-utils';
+import { convertTimezoneCommand } from '@/utils/timezone-conversion';
 
 // ❌ Incorrect
 import { parseTimeCommand } from '../../../../utils/time-parser';
-import { convertTimeToTimezones } from './timezone-utils';
+import { convertTimezoneCommand } from './timezone-conversion';
 ```
 
 ### Architecture
-- **API Routes**: Use Node.js runtime for Slack integration
-- **Shared Logic**: Core timezone parsing/conversion logic shared across the app
-- **Bot Features**: Slack supports slash commands and auto-detection
+- **Route Adapters**: Keep app routes thin; Slack behavior should live in `@/utils/slack/intake`.
+- **Timezone Catalog**: Timezone lookup, aliases, defaults, wildcards, search, and display labels live in `@/utils/timezone-catalog`.
+- **Timezone Conversion**: Web and Slack callers should use `@/utils/timezone-conversion` instead of coordinating parser and conversion helpers directly.
+- **World Time Visualization**: Time strip display state and drag math live in `@/utils/world-time-visualization`.
 
 ### Key Files
-- `@/utils/timezone-utils.ts` - Core timezone conversion logic
-- `@/utils/time-parser.ts` - Natural language time parsing
-- `@/utils/message-parser.ts` - Auto-detection of timezone patterns
-- `@/utils/slack-client.ts` - Slack API integration
+- `@/utils/timezone-catalog.ts` - Timezone catalog data, lookup, aliases, defaults, wildcards, and search.
+- `@/utils/timezone-conversion.ts` - Timezone conversion intent/result model and conversion math.
+- `@/utils/time-parser.ts` - Natural language time parsing implementation used by Timezone Conversion.
+- `@/utils/world-time-visualization.ts` - Display model and drag offset calculations for the time strip.
+- `@/utils/message-parser.ts` - Auto-detection of timezone patterns in Slack messages.
+- `@/utils/slack/intake.ts` - Slack command, event, interaction, auto-join, diagnostics, and pattern-test intake.
+- `@/utils/slack/client.ts` - Slack adapter backed by `@slack/web-api`.
 
 ### Build Requirements
 - Uses Next.js
@@ -52,7 +56,7 @@ pnpm check     # Biome linting and formatting
 See `.env.example` for required Slack credentials.
 
 ## Development Notes
-- Use shared utilities to avoid code duplication
+- Use domain modules from `CONTEXT.md` before adding route-local or UI-local logic.
 - Follow existing patterns for new bot features
 
 ---

@@ -1,64 +1,33 @@
 'use client';
 
-import { formatInTimeZone } from 'date-fns-tz';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Command, UserIcon } from 'lucide-react';
 import { type MouseEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { TimezoneCommand } from '@/components/timezone-command';
-import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
-import { findClosestTimezone, getHourlyTimezones } from '@/utils/timezone-utils';
-
-const HOUR_COLORS = [
-  '#1A1A1A',
-  '#262626',
-  '#333333',
-  '#404040',
-  '#4D4D4D',
-  '#595959',
-  '#666666',
-  '#808080',
-  '#999999',
-  '#B3B3B3',
-  '#CCCCCC',
-  '#E6E6E6',
-  '#FFFFFF',
-  '#E6E6E6',
-  '#CCCCCC',
-  '#B3B3B3',
-  '#999999',
-  '#808080',
-  '#666666',
-  '#595959',
-  '#4D4D4D',
-  '#404040',
-  '#333333',
-  '#262626',
-];
-
-function getGradientColor(hour: number): string {
-  return HOUR_COLORS[hour];
-}
+import {
+  calculateDragTimeOffset,
+  createWorldTimeVisualizationModel,
+  detectUserTimezone,
+  getWorldTimezones,
+} from '@/utils/world-time-visualization';
 
 export default function HorizontalWorldTimezones() {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [userTimezone, setUserTimezone] = useState('');
-  const timezones = useMemo(() => getHourlyTimezones(), []);
+  const timezones = useMemo(() => getWorldTimezones(), []);
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
   const [startY, setStartY] = useState(0);
   const [timeOffset, setTimeOffset] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastOffsetRef = useRef(0);
-  const [hoveredTimezone, setHoveredTimezone] = useState<string | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
 
   useEffect(() => {
     const now = new Date();
     setCurrentTime(now);
 
-    const userOffset = -now.getTimezoneOffset() / 60;
-    const closestTz = findClosestTimezone(timezones, userOffset);
-    setUserTimezone(closestTz);
+    setUserTimezone(detectUserTimezone(timezones, now));
 
     const timer = setInterval(() => {
       if (!isDragging) {
@@ -132,20 +101,17 @@ export default function HorizontalWorldTimezones() {
     const containerHeight = containerRef.current.offsetHeight;
     const isMobile = window.innerWidth < 768;
 
-    let timezoneSize: number;
-    let delta: number;
-
-    if (isMobile) {
-      timezoneSize = containerHeight / timezones.length;
-      delta = deltaY;
-    } else {
-      timezoneSize = containerWidth / timezones.length;
-      delta = deltaX;
-    }
-
-    const hourChange = Math.round(delta / timezoneSize);
-    const newOffset = lastOffsetRef.current - hourChange;
-    setTimeOffset(newOffset);
+    setTimeOffset(
+      calculateDragTimeOffset({
+        deltaX,
+        deltaY,
+        containerWidth,
+        containerHeight,
+        timezoneCount: timezones.length,
+        orientation: isMobile ? 'vertical' : 'horizontal',
+        previousOffset: lastOffsetRef.current,
+      })
+    );
   };
 
   const resetToLiveTime = () => {
@@ -154,25 +120,12 @@ export default function HorizontalWorldTimezones() {
     lastOffsetRef.current = 0;
   };
 
-  const getTimezoneColors = () => {
-    return timezones.map(tz => {
-      const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
-      const hourString = formatInTimeZone(adjustedTime, tz.gradientTz, 'HH');
-      const hours = Number.parseInt(hourString, 10);
-      return { tz: tz.name, color: getGradientColor(hours) };
-    });
-  };
-
-  const getTextColor = (timezone: string) => {
-    const adjustedTime = new Date(currentTime.getTime() + timeOffset * 3600000);
-    const tz = timezones.find(t => t.name === timezone);
-    const gradientTz = tz?.gradientTz || timezone;
-    const hourString = formatInTimeZone(adjustedTime, gradientTz, 'HH');
-    const hours = Number.parseInt(hourString, 10);
-    return hours >= 18 || hours < 6 ? 'text-white' : 'text-black';
-  };
-
-  const timezoneColors = getTimezoneColors();
+  const timezoneDisplays = createWorldTimeVisualizationModel({
+    currentTime,
+    timeOffset,
+    userTimezone,
+    timezones,
+  });
 
   return (
     <div
@@ -185,173 +138,134 @@ export default function HorizontalWorldTimezones() {
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      role="application"
       aria-label="World time zones visualization"
     >
       {/* Background gradient */}
       <div className="absolute inset-0 flex flex-col md:flex-row w-full h-full">
-        {timezones.map(tz => {
-          const bgColor = timezoneColors.find(tc => tc.tz === tz.name)?.color || '#000000';
-          return (
-            <div
-              key={`gradient-${tz.name}`}
-              className="flex-1"
-              style={{
-                background: bgColor,
-                flexBasis: `${100 / timezones.length}%`,
-              }}
-            />
-          );
-        })}
+        {timezoneDisplays.map(display => (
+          <div
+            key={`gradient-${display.timezone.name}`}
+            className="flex-1"
+            style={{
+              background: display.backgroundColor,
+              flexBasis: display.flexBasis,
+            }}
+          />
+        ))}
       </div>
 
       {/* Content overlay */}
       <div className="absolute inset-0 flex items-stretch md:items-center justify-center pointer-events-none">
         <div className="flex flex-col md:flex-row w-full h-full">
-          {timezones.map(tz => {
-            const textColor = getTextColor(tz.name);
-            const isHovered = hoveredTimezone === tz.name;
-            const cityAbbreviations = getCityAbbreviationsForTimezone(tz.offset);
+          {timezoneDisplays.map(display => (
+            <div
+              key={display.timezone.name}
+              className="group flex-1 flex flex-col items-center justify-center relative pointer-events-auto gap-2"
+            >
+              <div className="flex-1" />
 
-            return (
-              <div
-                key={tz.name}
-                className="flex-1 flex flex-col items-center justify-center relative pointer-events-auto gap-2"
-                onMouseEnter={() => setHoveredTimezone(tz.name)}
-                onMouseLeave={() => setHoveredTimezone(null)}
-              >
-                <div className="flex-1" />
+              {/* Main content - always centered and stationary */}
+              <div className="flex items-center md:flex-col md:items-center justify-center relative z-10">
+                {/* User timezone indicator */}
+                {display.isUserTimezone && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute md:top-[-16px] md:left-1/2 md:-ml-1.5 top-1/2 left-1/2 -ml-1.5 -mt-1.5"
+                    aria-hidden="true"
+                  >
+                    <UserIcon className={`w-3 h-3 ${display.textColorClass}`} />
+                  </motion.div>
+                )}
 
-                {/* Main content - always centered and stationary */}
-                <div className="flex items-center md:flex-col md:items-center justify-center relative z-10">
-                  {/* User timezone indicator */}
-                  {tz.name === userTimezone && (
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute md:top-[-16px] md:left-1/2 md:-ml-1.5 top-1/2 left-1/2 -ml-1.5 -mt-1.5"
-                      aria-hidden="true"
-                    >
-                      <UserIcon className={`w-3 h-3 ${textColor}`} />
-                    </motion.div>
-                  )}
-
-                  {/* Mobile layout */}
-                  <div className="md:hidden flex items-center justify-between w-full px-6">
-                    <div className="flex items-center space-x-2">
-                      <p className={`${textColor} text-[11px] font-mono`}>
-                        {formatInTimeZone(
-                          new Date(currentTime.getTime() + timeOffset * 3600000),
-                          tz.name,
-                          'HH:mm'
-                        )}
-                      </p>
-                      <div className="group relative cursor-help">
-                        <p className={`${textColor} text-[11px] font-bold`}>{tz.cityAbbr}</p>
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-30">
-                          <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
-                            {tz.cityFull}
-                          </div>
-                          <div className="border-t-4 border-l-4 border-r-4 border-transparent border-t-[#1A1A1A] w-0 h-0 absolute left-1/2 -translate-x-1/2 -bottom-1" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <p className={`${textColor} text-[8px] opacity-75`}>{tz.utcOffset}</p>
-                      <p className={`${textColor} text-[8px] font-bold opacity-75`}>{tz.tzAbbr}</p>
-                      <p className={`${textColor} text-[8px] font-mono`}>
-                        {formatInTimeZone(
-                          new Date(currentTime.getTime() + timeOffset * 3600000),
-                          tz.name,
-                          'EEE'
-                        )}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Desktop layout */}
-                  <div className="hidden md:flex md:flex-col md:items-center md:justify-center shrink-0">
-                    <p className={`${textColor} text-[8px] font-mono mb-0.5`}>
-                      {formatInTimeZone(
-                        new Date(currentTime.getTime() + timeOffset * 3600000),
-                        tz.name,
-                        'HH:mm'
-                      )}
+                {/* Mobile layout */}
+                <div className="md:hidden flex items-center justify-between w-full px-6">
+                  <div className="flex items-center space-x-2">
+                    <p className={`${display.textColorClass} text-[11px] font-mono`}>
+                      {display.timeLabel}
                     </p>
                     <div className="group relative cursor-help">
-                      <p className={`${textColor} text-[10px] font-bold`}>{tz.cityAbbr}</p>
+                      <p className={`${display.textColorClass} text-[11px] font-bold`}>
+                        {display.timezone.cityAbbr}
+                      </p>
                       <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-30">
                         <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
-                          {tz.cityFull}
+                          {display.timezone.cityFull}
                         </div>
                         <div className="border-t-4 border-l-4 border-r-4 border-transparent border-t-[#1A1A1A] w-0 h-0 absolute left-1/2 -translate-x-1/2 -bottom-1" />
                       </div>
                     </div>
-                    <p className={`${textColor} text-[8px] font-mono mt-0.5`}>
-                      {formatInTimeZone(
-                        new Date(currentTime.getTime() + timeOffset * 3600000),
-                        tz.name,
-                        'EEE'
-                      )}
+                  </div>
+                  <div className="flex items-center space-x-1">
+                    <p className={`${display.textColorClass} text-[8px] opacity-75`}>
+                      {display.timezone.utcOffset}
                     </p>
-                    <p className={`${textColor} text-[7px] font-bold mt-0.5 opacity-75`}>
-                      {tz.tzAbbr}
+                    <p className={`${display.textColorClass} text-[8px] font-bold opacity-75`}>
+                      {display.timezone.tzAbbr}
+                    </p>
+                    <p className={`${display.textColorClass} text-[8px] font-mono`}>
+                      {display.dayLabel}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex-1">
-                  {/* City abbreviations overlay - positioned above main content - desktop only */}
-                  <div className="hidden md:block">
-                    <AnimatePresence>
-                      {isHovered && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 10, scale: 0.9 }}
-                          animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.9 }}
-                          transition={{
-                            duration: 0.3,
-                            ease: 'easeOut',
-                            staggerChildren: 0.05,
-                          }}
-                        >
-                          <div className="flex flex-col items-center space-y-1">
-                            {cityAbbreviations.map((city, index) => (
-                              <motion.div
-                                key={city}
-                                initial={{ opacity: 0, y: 5 }}
-                                animate={{ opacity: 0.8, y: 0 }}
-                                exit={{ opacity: 0, y: -5 }}
-                                transition={{
-                                  delay: index * 0.05,
-                                  duration: 0.2,
-                                  ease: 'easeOut',
-                                }}
-                                className={`${textColor} font-medium leading-tight text-[6px]`}
-                              >
-                                {city}
-                              </motion.div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                {/* Desktop layout */}
+                <div className="hidden md:flex md:flex-col md:items-center md:justify-center shrink-0">
+                  <p className={`${display.textColorClass} text-[8px] font-mono mb-0.5`}>
+                    {display.timeLabel}
+                  </p>
+                  <div className="group relative cursor-help">
+                    <p className={`${display.textColorClass} text-[10px] font-bold`}>
+                      {display.timezone.cityAbbr}
+                    </p>
+                    <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-1 hidden group-hover:block z-30">
+                      <div className="bg-[#1A1A1A] text-white text-xs rounded-lg py-1 px-2 whitespace-nowrap">
+                        {display.timezone.cityFull}
+                      </div>
+                      <div className="border-t-4 border-l-4 border-r-4 border-transparent border-t-[#1A1A1A] w-0 h-0 absolute left-1/2 -translate-x-1/2 -bottom-1" />
+                    </div>
+                  </div>
+                  <p className={`${display.textColorClass} text-[8px] font-mono mt-0.5`}>
+                    {display.dayLabel}
+                  </p>
+                  <p className={`${display.textColorClass} text-[7px] font-bold mt-0.5 opacity-75`}>
+                    {display.timezone.tzAbbr}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex-1">
+                {/* City abbreviations overlay - positioned above main content - desktop only */}
+                <div className="hidden md:block opacity-0 translate-y-2 scale-95 transition duration-300 ease-out group-hover:opacity-100 group-hover:translate-y-0 group-hover:scale-100">
+                  <div className="flex flex-col items-center space-y-1">
+                    {display.cityAbbreviations.map(city => (
+                      <div
+                        key={city}
+                        className={`${display.textColorClass} font-medium leading-tight text-[6px] opacity-80`}
+                      >
+                        {city}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 
       {/* UTC offset labels at bottom */}
       <div className="absolute bottom-0 left-0 right-0 hidden md:flex justify-center pb-2">
-        {timezones.map(tz => (
+        {timezoneDisplays.map(display => (
           <div
-            key={`utc-${tz.name}`}
+            key={`utc-${display.timezone.name}`}
             className="flex-1 text-center"
-            style={{ flexBasis: `${100 / timezones.length}%` }}
+            style={{ flexBasis: display.flexBasis }}
           >
-            <p className={`${getTextColor(tz.name)} text-[8px] opacity-75`}>{tz.utcOffset}</p>
+            <p className={`${display.textColorClass} text-[8px] opacity-75`}>
+              {display.timezone.utcOffset}
+            </p>
           </div>
         ))}
       </div>

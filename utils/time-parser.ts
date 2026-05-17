@@ -1,6 +1,10 @@
 import * as chrono from 'chrono-node';
-import { getCityAbbreviationsForTimezone } from '@/utils/city-abbreviations';
-import { getAllTimezoneData } from '@/utils/timezone-utils';
+import {
+  ABSOLUTE_TIMEZONE,
+  getDefaultTimezones,
+  resolveTimezone,
+  resolveTimezoneTargets,
+} from '@/utils/timezone-catalog';
 
 export interface ParsedTimeCommand {
   sourceTime: Date;
@@ -14,56 +18,6 @@ export interface TimezoneMatch {
   timezone: string;
   confidence: number;
 }
-
-const TIMEZONE_ALIASES: Record<string, string> = {
-  // US timezones
-  EST: 'America/New_York',
-  EDT: 'America/New_York',
-  CST: 'America/Chicago',
-  CDT: 'America/Chicago',
-  MST: 'America/Denver',
-  MDT: 'America/Denver',
-  PST: 'America/Los_Angeles',
-  PDT: 'America/Los_Angeles',
-  // Europe
-  GMT: 'Europe/London',
-  UTC: 'UTC',
-  CET: 'Europe/Paris',
-  CEST: 'Europe/Paris',
-  // Asia
-  JST: 'Asia/Tokyo',
-  SGT: 'Asia/Singapore',
-  // Half-hour timezones
-  IST: 'Asia/Kolkata',
-  NPT: 'Asia/Kathmandu',
-  IRST: 'Asia/Tehran',
-  ACST: 'Australia/Adelaide',
-  // Australia
-  AEST: 'Australia/Sydney',
-  AEDT: 'Australia/Sydney',
-};
-
-const CITY_ALIASES: Record<string, string> = {
-  NYC: 'America/New_York',
-  LA: 'America/Los_Angeles',
-  CHI: 'America/Chicago',
-  LON: 'Europe/London',
-  PAR: 'Europe/Paris',
-  TOK: 'Asia/Tokyo',
-  SYD: 'Australia/Sydney',
-  SIN: 'Asia/Singapore',
-  HKG: 'Asia/Hong_Kong',
-  BKK: 'Asia/Bangkok',
-  DUB: 'Asia/Dubai',
-  MOS: 'Europe/Moscow',
-  CAI: 'Africa/Cairo',
-  // Half-hour timezone cities
-  DEL: 'Asia/Kolkata',
-  BOM: 'Asia/Kolkata',
-  KTM: 'Asia/Kathmandu',
-  THR: 'Asia/Tehran',
-  ADL: 'Australia/Adelaide',
-};
 
 export function parseTimeCommand(text: string): ParsedTimeCommand | null {
   const cleanText = text.trim().toLowerCase();
@@ -106,7 +60,7 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
     if (parsed) {
       return {
         sourceTime: parsed,
-        sourceTimezone: '__absolute__', // Natural language parsing gives absolute time
+        sourceTimezone: ABSOLUTE_TIMEZONE, // Natural language parsing gives absolute time
         targetTimezones: getDefaultTimezones(),
         originalText: text,
         isNow: false,
@@ -125,45 +79,42 @@ export function parseTimeCommand(text: string): ParsedTimeCommand | null {
     case 1: {
       // "14:00 Paris to Tokyo"
       sourceTime = parseTimeString(matches[1]);
-      sourceTimezone = resolveTimezone(matches[2]);
+      const resolvedSourceTimezone = resolveTimezone(matches[2]);
+      if (!resolvedSourceTimezone) {
+        return null;
+      }
+      sourceTimezone = resolvedSourceTimezone;
       // Handle multiple target timezones separated by commas
       const targets = matches[3].split(/[,\s]+/).filter(tz => tz.length > 0);
-      targetTimezones = targets.map(tz => resolveTimezone(tz));
+      targetTimezones = resolveTimezoneTargets(targets);
       break;
     }
 
     case 2: {
       // "now in London" or "now in London, Paris, Tokyo" or "now in *"
       sourceTime = new Date();
-      sourceTimezone = '__absolute__'; // Special token for absolute time
+      sourceTimezone = ABSOLUTE_TIMEZONE; // Special token for absolute time
       const cities = matches[2].split(/[,\s]+/).filter(city => city.length > 0);
-      targetTimezones = cities.map(city => resolveTimezone(city));
-      
-      // Handle wildcard expansion - show major timezones including half-hour
-      if (targetTimezones.includes('__wildcard__')) {
-        targetTimezones = [
-          'America/New_York', 'America/Los_Angeles', 'America/Chicago', 'America/Denver',
-          'Europe/London', 'Europe/Paris', 'Europe/Moscow',
-          'Asia/Kolkata', 'Asia/Tokyo', 'Asia/Singapore', 'Asia/Dubai',
-          'Australia/Sydney', 'Pacific/Auckland'
-        ];
-      }
+      targetTimezones = resolveTimezoneTargets(cities);
       break;
     }
 
     case 3: // "meeting at 10am PST"
     case 4: // "3pm EST"
       sourceTime = parseTimeString(matches[1]);
-      sourceTimezone = resolveTimezone(matches[2]);
+      {
+        const resolvedSourceTimezone = resolveTimezone(matches[2]);
+        if (!resolvedSourceTimezone) {
+          return null;
+        }
+        sourceTimezone = resolvedSourceTimezone;
+      }
       targetTimezones = getDefaultTimezones().filter(tz => tz !== sourceTimezone);
       break;
 
     default:
       return null;
   }
-
-  // Filter out invalid timezones (but keep __wildcard__ for processing)
-  targetTimezones = targetTimezones.filter(tz => tz !== 'Unknown');
 
   if (targetTimezones.length === 0) {
     targetTimezones = getDefaultTimezones();
@@ -214,63 +165,6 @@ function parseTimeString(timeStr: string): Date {
   return now;
 }
 
-function resolveTimezone(input: string): string {
-  const normalized = input.trim().toUpperCase();
-
-  // Handle wildcard - return special marker for wildcard expansion
-  if (normalized === '*') {
-    return '__wildcard__';
-  }
-
-  // Check direct aliases
-  if (TIMEZONE_ALIASES[normalized]) {
-    return TIMEZONE_ALIASES[normalized];
-  }
-
-  if (CITY_ALIASES[normalized]) {
-    return CITY_ALIASES[normalized];
-  }
-
-  // Check if it's a full timezone name
-  const timezones = getAllTimezoneData();
-  const directMatch = timezones.find(tz => tz.name.toLowerCase() === input.toLowerCase());
-  if (directMatch) {
-    return directMatch.name;
-  }
-
-  // Fuzzy matching for cities
-  const cityMatch = timezones.find(
-    tz =>
-      tz.cityFull.toLowerCase().includes(input.toLowerCase()) ||
-      tz.cityAbbr.toLowerCase() === normalized.toLowerCase()
-  );
-  if (cityMatch) {
-    return cityMatch.name;
-  }
-
-  // Check city abbreviations utility - need to find timezone by city abbrev
-  const timezonesByAbbrev = timezones.filter(tz => {
-    const abbrevs = getCityAbbreviationsForTimezone(tz.offset);
-    return abbrevs.includes(normalized);
-  });
-  if (timezonesByAbbrev.length > 0) {
-    return timezonesByAbbrev[0].name;
-  }
-
-  return 'Unknown';
-}
-
-function getDefaultTimezones(): string[] {
-  return [
-    'America/New_York',
-    'America/Los_Angeles',
-    'Europe/London',
-    'Europe/Paris',
-    'Asia/Tokyo',
-    'Australia/Sydney',
-  ];
-}
-
 export function extractTimezonesFromText(text: string): string[] {
   if (!text || text.trim() === '') {
     return [];
@@ -281,7 +175,7 @@ export function extractTimezonesFromText(text: string): string[] {
 
   for (const word of words) {
     const timezone = resolveTimezone(word);
-    if (timezone !== 'Unknown') {
+    if (timezone) {
       timezones.push(timezone);
     }
   }

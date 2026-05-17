@@ -1,8 +1,12 @@
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = localFont({
+  src: '../assets/Inter-SemiBold.ttf',
+  weight: '600',
+  style: 'normal',
+});
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -26,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 
 export const metadata = {
+  metadataBase: new URL('https://tzc.app'),
   title: 'tzc - time zone converter',
   description:
     'interactive visualization of world time zones with draggable interface and gradient background representing day/night cycles. automatically convert timezone mentions in slack messages!',

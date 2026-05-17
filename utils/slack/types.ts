@@ -20,12 +20,7 @@ export interface SlackResponse {
 }
 
 // Block Kit types
-export type SlackBlock =
-  | HeaderBlock
-  | SectionBlock
-  | DividerBlock
-  | ContextBlock
-  | ActionsBlock;
+export type SlackBlock = HeaderBlock | SectionBlock | DividerBlock | ContextBlock | ActionsBlock;
 
 export interface HeaderBlock {
   type: 'header';

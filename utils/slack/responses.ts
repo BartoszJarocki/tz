@@ -1,8 +1,4 @@
-import type {
-  SlackBlock,
-  SlackResponse,
-  TimezoneConversion,
-} from './types';
+import type { SlackBlock, SlackResponse, TimezoneConversion } from './types';
 
 export function createTimezoneResponse(
   conversions: TimezoneConversion[],
@@ -10,9 +6,7 @@ export function createTimezoneResponse(
   originalTimezone?: string
 ): SlackResponse {
   const headerText =
-    originalTime && originalTimezone
-      ? `${originalTime} ${originalTimezone}`
-      : 'Time Conversion';
+    originalTime && originalTimezone ? `${originalTime} ${originalTimezone}` : 'Time Conversion';
 
   const blocks: SlackBlock[] = [
     {
@@ -158,7 +152,7 @@ export function createListResponse(
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*${region}*\n${tzList.map((tz) => `• ${tz.city} (${tz.offset})`).join('\n')}`,
+        text: `*${region}*\n${tzList.map(tz => `• ${tz.city} (${tz.offset})`).join('\n')}`,
       },
     });
   }
@@ -190,7 +184,7 @@ export function createSearchResponse(
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: results.map((r) => `• *${r.city}* — ${r.offset}`).join('\n'),
+        text: results.map(r => `• *${r.city}* — ${r.offset}`).join('\n'),
       },
     },
   ];
